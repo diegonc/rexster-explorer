@@ -1,5 +1,8 @@
 (ns rexster-explorer.server
+  (:gen-class)
   (:require [compojure.core :refer [defroutes GET]]
+            [compojure.route :refer [resources]]
+            [ring.adapter.jetty :refer [run-jetty]]
             [cemerick.url :refer [url url-decode]]
             [clj-http.client :as http]))
 
@@ -13,3 +16,10 @@
                                        :headers
                                        (#(% "Content-Type")))}
           :body (:body resp)})))
+
+(defroutes app
+  graph-proxy
+  (resources "/"))
+
+(defn -main []
+  (run-jetty app {:port 8080}))

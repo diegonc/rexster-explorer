@@ -11,29 +11,37 @@
                  [prismatic/om-tools "0.3.12"]
                  [com.cemerick/url "0.1.1"]
                  [cljs-http "0.1.37"]
-                 [clj-http "2.0.0"]]
+                 [clj-http "2.0.0"]
+                 [compojure "1.4.0"]
+                 [ring "1.4.0"]]
 
   :plugins [[lein-cljsbuild "1.1.0"]
             [lein-figwheel "0.4.1"]]
 
-  :source-paths ["src"]
+  :source-paths ["src/clj"]
+  :main rexster-explorer.server
+  :hooks [leiningen.cljsbuild]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
 
+  :profiles {:uberjar {:aot :all}}
+
   :cljsbuild {
     :builds [{:id "dev"
-              :source-paths ["src"]
+              :source-paths ["src/cljs"]
+              :jar true
               :figwheel {:websocket-host :js-client-host
 ;                         :on-jsload "rexster-explorer.core/on-js-reload"
-                         }
+                        }
               :compiler {:main rexster-explorer.core
                          :asset-path "js/compiled/out"
                          :output-to "resources/public/js/compiled/rexster_explorer.js"
                          :output-dir "resources/public/js/compiled/out"
                          :source-map-timestamp true}}
              {:id "min"
-              :source-paths ["src"]
+              :source-paths ["src/cljs"]
+              :jar true
               :compiler {:main rexster-explorer.core
                          :output-to "resources/public/js/compiled/rexster_explorer.js"
                          :optimizations :advanced
