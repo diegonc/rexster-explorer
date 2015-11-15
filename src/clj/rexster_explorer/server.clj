@@ -3,6 +3,7 @@
   (:use [ring.middleware.gzip])
   (:require [compojure.core :refer [defroutes GET]]
             [compojure.route :refer [resources]]
+            [ring.util.response :as resp]
             [ring.adapter.jetty :refer [run-jetty]]
             [cemerick.url :refer [url url-decode]]
             [clj-http.client :as http]))
@@ -20,6 +21,7 @@
 
 (defroutes app-routes
   graph-proxy
+  (GET "/" [] (resp/content-type (resp/resource-response "public/index.html") "text/html"))
   (resources "/"))
 
 (def app
