@@ -21,12 +21,12 @@
 
   :source-paths ["src/clj"]
   :main rexster-explorer.server
-  :hooks [leiningen.cljsbuild]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
 
-  :profiles {:uberjar {:aot :all}}
+  :profiles {:uberjar {:aot :all
+                       :prep-tasks ["compile" ["cljsbuild" "once" "min"]]}}
 
   :cljsbuild {
     :builds [{:id "dev"
