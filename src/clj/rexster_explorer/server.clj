@@ -1,5 +1,6 @@
 (ns rexster-explorer.server
   (:gen-class)
+  (:use [ring.middleware.gzip])
   (:require [compojure.core :refer [defroutes GET]]
             [compojure.route :refer [resources]]
             [ring.adapter.jetty :refer [run-jetty]]
@@ -17,9 +18,13 @@
                                        (#(% "Content-Type")))}
           :body (:body resp)})))
 
-(defroutes app
+(defroutes app-routes
   graph-proxy
   (resources "/"))
+
+(def app
+  (-> app-routes
+      (wrap-gzip)))
 
 (defn -main []
   (run-jetty app {:port 8080}))
