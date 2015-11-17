@@ -12,7 +12,13 @@
         enc-url (url-encode (str res-url))
         uri (str graph-proxy enc-url)]
     (go
-      (<! (http/get uri)))))
+      (let [r (<! (http/get uri))
+            success (:success r)
+            body (:body r)]
+        {:success success
+         :results (if success
+                    (:results body)
+                    body)}))))
 
 (defn make-graph [server graph]
   (let [base-uri
