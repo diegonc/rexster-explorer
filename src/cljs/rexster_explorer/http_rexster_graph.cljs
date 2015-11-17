@@ -1,7 +1,7 @@
 (ns rexster-explorer.http-rexster-graph
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [rexster-explorer.rexster-graph :refer [RexsterGraph]]
-            [cljs.core.async :as async :refer [chan put! <!]]
+            [cljs.core.async :as async :refer [<!]]
             [cemerick.url :refer [url url-encode]]
             [cljs-http.client :as http]))
 
