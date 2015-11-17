@@ -4,7 +4,6 @@
             [om-tools.dom :as dom :include-macros true]
             [cljs.core.async :refer [<!]]
             [rexster-explorer.http-rexster-graph :as rexster]
-            [rexster-explorer.rexster-graph
-             :refer [get-vertex get-edge]]))
+            [rexster-explorer.rexster-graph :as rg]))
 
 (enable-console-print!)
