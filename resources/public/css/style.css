@@ -1,7 +1,24 @@
-/* some style */
-ul li input {
-  width: 400px;
+/* Make grid full width */
+.container {
+    width: 100%;
+    max-width: initial;
+    padding: 0 2em;
 }
-ul li button {
-  margin-left: 10px;
+
+/* Style header */
+.header {
+    text-align: center;
 }
+
+/* 1. Graph information */
+.header div {
+    width: 300px;
+    margin: auto;
+    text-align: right;
+}
+
+.header div h6 {
+    font-family: monospace;
+}
+
+/* 2. TODO: Drawer handle */
