@@ -5,6 +5,10 @@
             [cemerick.url :refer [url url-encode]]
             [cljs-http.client :as http]))
 
+(defprotocol HttpRexsterGraphInfo
+  (get-graph-name [this])
+  (get-graph-uri [this]))
+
 (def ^:private graph-proxy "/graph-proxy/")
 
 (defn- get-uri [url-parts]
@@ -53,6 +57,9 @@
                   "/graphs/"
                   (url-encode graph)))]
     (reify
+      HttpRexsterGraphInfo
+      (get-graph-name [_] graph)
+      (get-graph-uri [_] (str base-uri))
       rg/RexsterGraph
       (get-vertex [_ id]
         (get-uri [base-uri "vertices" (url-encode id)]))
