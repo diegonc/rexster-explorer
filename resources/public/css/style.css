@@ -1,3 +1,15 @@
+/* HTML tag style overrides */
+
+/* Main containers as high as the browser window */
+html, body, .container {
+    height: 100%;
+}
+
+/* So 100% means 100% */
+* {
+    box-sizing: border-box;
+}
+
 /* Make grid full width */
 .container {
     width: 100%;
@@ -8,6 +20,8 @@
 /* Style header */
 .header {
     text-align: center;
+    height: 120px;
+    overflow: hidden;
 }
 
 /* 1. Graph information */
@@ -21,4 +35,29 @@
     font-family: monospace;
 }
 
-/* 2. TODO: Drawer handle */
+/* TODO: Drawer handle */
+
+/* 2. Content area */
+.content {
+    height: calc(100% - 120px);
+}
+
+/* 2.1. Search box */
+.content .search {
+    height: 100%;
+}
+
+.content .search fieldset {
+    height: 130px;
+}
+
+/* 2.2. Search results */
+.content .search .search-results {
+    height: calc(100% - 145px);
+    overflow: auto;
+}
+
+/* 2.3. Graph rendering area */
+#graph-render {
+    height: 100%;
+}
