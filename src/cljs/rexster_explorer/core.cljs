@@ -32,7 +32,8 @@
       (dom/div
        {:class "input-like search-input-container"}
        (dom/input {:class "not-input search-prefix"
-                   :type "text" :value "g."})
+                   :type "text" :value "g."
+                   :disabled true})
        (dom/input
         {:class "not-input search-text"
          :placeholder "Gremlin query used to search the graph"
