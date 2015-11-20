@@ -51,6 +51,40 @@ html, body, .container {
     height: 130px;
 }
 
+/* 2.1.1. Search Input Container */
+.content .search fieldset .search-input-container {
+    font-family: 'Cutive Mono', monospace, sans;
+}
+
+.content .search fieldset .search-input-container .search-prefix {
+    padding-left: 10px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-right: 3px;
+    height: 100%;
+    display: inline-block;
+    float: left;
+    background-color: darkseagreen;
+    border-bottom-left-radius: 4px;
+    border-top-left-radius: 4px;
+    width: 27px;
+}
+
+.content .search fieldset .search-input-container .search-text {
+    height: 100%;
+    width: calc(100% - 29px);
+    padding: 0;
+    margin: 0;
+    display: inline-block;
+    float: left;
+    padding-left: 0.2em;
+}
+
+/* 2.1.2. Search Button Container */
+.content .search fieldset .search-button-container {
+    text-align: right;
+}
+
 /* 2.2. Search results */
 .content .search .search-results {
     height: calc(100% - 145px);

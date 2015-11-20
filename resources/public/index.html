@@ -17,11 +17,15 @@
     <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600'
           rel='stylesheet'
           type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Cutive+Mono'
+          rel='stylesheet'
+          type='text/css'>
 
     <!-- CSS
     –––––––––––––––––––––––––––––––––––––––––––––––––– -->
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/skeleton-extensions.css">
     <link rel="stylesheet" href="css/style.css">
   </head>
   <body>
@@ -34,8 +38,11 @@
           <div class="search" id="graph-search">
             <fieldset>
               <legend>Graph Search</legend>
-              <input style="width: 100%" type="text" placeholder="Gremlin query used to search the graph" />
-              <div style="text-align: right">
+              <div class="input-like search-input-container">
+                <input class="not-input search-prefix" type="text" value="g." />
+                <input class="not-input search-text" type="text" placeholder="Gremlin query used to search the graph" />
+              </div>
+              <div class="search-button-container">
                 <button type="button">Search</button>
               </div>
             </fieldset>
@@ -65,8 +72,7 @@
           Sigma.js Graph
         </div>
     </div>
-    <div id="registry"></div>
-    <div id="classes"></div>
+
     <script src="js/compiled/rexster_explorer.js"></script>
   </body>
 </html>

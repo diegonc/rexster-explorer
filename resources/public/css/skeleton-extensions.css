@@ -1,0 +1,22 @@
+/* Forms
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+/* to make an element look like an input */
+.input-like {  
+  height: 38px;
+  padding: 0;
+/* TODO: check FF...
+  padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
+  background-color: #fff;
+  border: 1px solid #D1D1D1;
+  border-radius: 4px;
+  box-shadow: none;
+  box-sizing: border-box;
+  margin-bottom: 1.5rem; }
+
+/* to remove (kinda) the input look from an input */
+input.not-input {
+  height: auto;
+  border: none;
+  border-radius: initial;
+  margin-bottom: initial;
+}
