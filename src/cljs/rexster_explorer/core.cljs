@@ -6,9 +6,28 @@
             [om-tools.core :refer-macros [defcomponent]]
             [cljs.core.async :refer [<! >! chan]]
             [rexster-explorer.http-rexster-graph :as rexster]
-            [rexster-explorer.rexster-graph :as rg]))
+            [rexster-explorer.rexster-graph :as rg]
+            [cljsjs.vis]))
 
 (enable-console-print!)
+
+(defonce vis-options #js {})
+(defonce vis-data #js {"nodes" (js/vis.DataSet.)
+                       "edges" (js/vis.DataSet.)})
+(defonce vis-network (js/vis.Network.
+                      (. js/document (getElementById "graph-render"))
+                      vis-data
+                      vis-options) )
+
+;; Test Graph
+(let [nodes (.-nodes vis-data)
+      edges (.-edges vis-data)]
+  (.add nodes #js [#js {"id" 1 "label" "A"}
+                   #js {"id" 2 "label" "B"}])
+  (.add edges #js {"id" "e1"
+                   "from" 1
+                   "to" 2
+                   "label" "Search and add vertices or edges"}))
 
 (defonce app-state
   (atom {:current-graph "tinkergraph"

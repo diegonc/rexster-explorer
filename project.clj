@@ -14,7 +14,8 @@
                  [clj-http "2.0.0"]
                  [compojure "1.4.0"]
                  [ring "1.4.0"]
-                 [bk/ring-gzip "0.1.1"]]
+                 [bk/ring-gzip "0.1.1"]
+                 [cljsjs/vis "4.9.0-1"]]
 
   :plugins [[lein-cljsbuild "1.1.0"]
             [lein-figwheel "0.4.1"]]
