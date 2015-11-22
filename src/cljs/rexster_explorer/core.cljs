@@ -1,6 +1,7 @@
 (ns ^:figwheel-always rexster-explorer.core
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [om.core :as om :include-macros true]
+  (:require [clojure.string :refer [blank?]]
+            [om.core :as om :include-macros true]
             [om-tools.dom :as dom :include-macros true]
             [om-tools.core :refer-macros [defcomponent]]
             [cljs.core.async :refer [<! >! chan]]
@@ -25,7 +26,7 @@
 (defn search-box-submit-query
   "Puts the query, if set, in the events channel"
   [state]
-  (if (:query state)
+  (if-not (blank? (:query state))
      (go
        (>! (:events-chan state)
            {:event-type :search-box-enter-query
