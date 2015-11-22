@@ -103,6 +103,23 @@
          :on-click #(search-box-submit-query state)}
         "Search"))))))
 
+(defcomponent search-results
+  "Renders the list of search results. The initial state
+   must contain the following fields:
+     - :events-chan Channel where generated events are placed
+  "
+  [data owner]
+  (render-state
+   [_ state]
+   (let [results (:results data)]
+     (if (empty? results)
+       (dom/p "No results found for the given query.")
+       (dom/ul
+        (->> results
+             (remove nil?)
+             (map str)
+             (map dom/li)))))))
+
 (defmulti graph-query-op-dispatch
   "Graph query op dispatcher."
   (fn [op owner] (:op-type op)))
@@ -155,7 +172,7 @@
 (defcomponent graph-query [data owner]
   (init-state [_] {:events-chan (chan)
                    :with-button false
-                   :query-state {:success true}})
+                   :query-state {:success :empty}})
   (will-mount
    [_]
    (let [events-chan (om/get-state owner :events-chan)]
@@ -183,12 +200,15 @@
                                                [:message :error]))}})
       (dom/div
        {:class results-class}
-       (if-not (-> state :query-state :success)
-         (dom/div {:class "search-error-message"}
-                  (dom/p (-> state :query-state :message))
-                  (dom/pre (-> state :query-state :error)))
-         (dom/ul
-          (map #(dom/li (str %)) (-> state :results)))))))))
+       (let [success (-> state :query-state :success)]
+         (if-not success
+           (dom/div {:class "search-error-message"}
+                    (dom/p (-> state :query-state :message))
+                    (dom/pre (-> state :query-state :error)))
+           (if-not (= :empty success)
+             (om/build search-results {:graph current-graph
+                                       :results (-> state :results)}
+                       {:init-state {:events-chan (:events-chan state)}})))))))))
 
 ;; Attach graph information component
 (om/root
