@@ -125,7 +125,6 @@
       (let [resp (<! (rg/exec-graph-query graph query))
             success (:success resp)
             results (:results resp)]
-        (println resp)
         (if success
           (om/set-state! owner :results results))
         (om/update-state!
