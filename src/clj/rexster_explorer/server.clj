@@ -1,6 +1,8 @@
 (ns rexster-explorer.server
   (:gen-class)
-  (:use [ring.middleware.gzip])
+  (:use [ring.middleware.gzip]
+        [ring.middleware.params]
+        [ring.middleware.reload])
   (:require [compojure.core :refer [defroutes GET]]
             [compojure.route :refer [resources]]
             [ring.util.response :as resp]
@@ -26,6 +28,13 @@
 
 (def app
   (-> app-routes
+      (wrap-params)
+      (wrap-gzip)))
+
+(def figwheel-handler
+  (-> graph-proxy
+      (wrap-params)
+      (wrap-reload)
       (wrap-gzip)))
 
 (defn -main []

@@ -49,4 +49,4 @@
                          :pretty-print false
                          :source-map-timestamp true}}]}
   :figwheel {:css-dirs ["resources/public/css"]
-             :ring-handler rexster-explorer.server/graph-proxy})
+             :ring-handler rexster-explorer.server/figwheel-handler})
