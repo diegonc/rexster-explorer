@@ -20,3 +20,7 @@ input.not-input {
   border-radius: initial;
   margin-bottom: initial;
 }
+/* hide errors too */
+input.not-input.input-has-errors {
+  border: none;
+}

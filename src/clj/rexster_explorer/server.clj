@@ -8,7 +8,8 @@
             [ring.util.response :as resp]
             [ring.adapter.jetty :refer [run-jetty]]
             [cemerick.url :refer [url url-decode]]
-            [clj-http.client :as http]))
+            [clj-http.client :as http]
+            [clojure.data.json :as json]))
 
 (defroutes graph-proxy
   (GET "/graph-proxy/:eurl" [eurl :as request]

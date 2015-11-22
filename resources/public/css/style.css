@@ -48,6 +48,10 @@ html, body, .container {
 }
 
 .content .search fieldset {
+    height: 82px;
+}
+
+.content .search fieldset.with-button {
     height: 130px;
 }
 
@@ -80,6 +84,12 @@ html, body, .container {
     padding-left: 0.2em;
 }
 
+.content .search fieldset .search-input-container .search-text:focus {
+    width: calc(100% - 27px);
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
 /* 2.1.2. Search Button Container */
 .content .search fieldset .search-button-container {
     text-align: right;
@@ -87,11 +97,30 @@ html, body, .container {
 
 /* 2.2. Search results */
 .content .search .search-results {
-    height: calc(100% - 145px);
     overflow: auto;
+    height: calc(100% - 97px);
+}
+
+.content .search .search-results.with-button {
+    height: calc(100% - 145px);
+}
+
+/* 2.2.1 Error message */
+
+.search-error-message {
+    color: red;
+}
+
+.search-error-message pre {
+    word-break: break-word;
 }
 
 /* 2.3. Graph rendering area */
 #graph-render {
     height: 100%;
+}
+
+/* Last. UI states, like errors, must override style set before, i.e. borders, colors, etc */
+input.input-has-errors, .input-like.input-has-errors {
+    border-color: red;
 }

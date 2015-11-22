@@ -11,18 +11,23 @@
 
 (def ^:private graph-proxy "/graph-proxy/")
 
-(defn- get-uri [url-parts]
-  (let [res-url (apply url url-parts)
-        enc-url (url-encode (str res-url))
-        uri (str graph-proxy enc-url)]
-    (go
-      (let [r (<! (http/get uri))
-            success (:success r)
-            body (:body r)]
-        {:success success
-         :results (if success
-                    (:results body)
-                    body)}))))
+(defn- log [x] (println x) x)
+
+(defn- get-uri
+  ([url-parts]
+   (get-uri url-parts nil))
+  ([url-parts query-params]
+   (let [res-url (apply url url-parts)
+         enc-url (url-encode (str res-url))
+         uri (str graph-proxy enc-url)]
+     (go
+       (let [r (<! (http/get uri {:query-params query-params}))
+             success (:success r)
+             body (:body r)]
+         {:success success
+          :results (if success
+                     (:results body)
+                     body)})))))
 
 (defn- collect-vertex-ids [edges]
   (->> edges
@@ -72,4 +77,7 @@
         (go
           (let [edges (<! (rg/get-both-edges this id))
                 res (<! (produce-neighbourhood this edges))]
-            res))))))
+            res)))
+      (exec-graph-query [_ script]
+        (get-uri [base-uri "tp" "gremlin"]
+                 {"script" script})))))
