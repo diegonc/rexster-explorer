@@ -14,7 +14,8 @@
   (GET "/graph-proxy/:eurl" [eurl :as request]
        (let [resp (-> eurl
                       url-decode
-                      (http/get {:throw-exceptions false}))]
+                      (http/get {:query-params (:query-params request)
+                                 :throw-exceptions false}))]
          {:status (:status resp)
           :headers {"Content-Type" (-> resp
                                        :headers
