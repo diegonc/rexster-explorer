@@ -28,15 +28,27 @@
   (GET "/" [] (resp/content-type (resp/resource-response "public/index.html") "text/html"))
   (resources "/"))
 
+(defn wrap-exceptions
+  [handler]
+  (fn [request]
+    (try
+      (handler request)
+      (catch Exception e
+        {:status 500
+         :headers {"Content-Type" "application/json;charset=UTF-8"}
+         :body (json/write-str {:message (.getMessage e)})}))))
+
 (def app
   (-> app-routes
       (wrap-params)
+      (wrap-exceptions)
       (wrap-gzip)))
 
 (def figwheel-handler
   (-> graph-proxy
       (wrap-params)
       (wrap-reload)
+      (wrap-exceptions)
       (wrap-gzip)))
 
 (defn -main []
