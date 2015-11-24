@@ -131,6 +131,13 @@
          :on-click #(search-box-submit-query state)}
         "Search"))))))
 
+;; TODO: make component
+(defn search-result [item]
+  (dom/div
+   {:class "row"}
+   (dom/div {:class "ten columns"} item)
+   (dom/div {:class "two columns"} "Add")))
+
 (defcomponent search-results
   "Renders the list of search results. The initial state
    must contain the following fields:
@@ -141,12 +148,17 @@
    [_ state]
    (let [results (:results data)]
      (if (empty? results)
-       (dom/p "No results found for the given query.")
-       (dom/ul
+       (dom/div
+        {:class "row"}
+        (dom/p
+         {:class "twelve columns"}
+         "No results found for the given query."))
+       (dom/div
+        {:class "container with-no-padding"}
         (->> results
              (remove nil?)
              (map str)
-             (map dom/li)))))))
+             (map search-result)))))))
 
 (defmulti graph-query-op-dispatch
   "Graph query op dispatcher."
