@@ -99,6 +99,19 @@ html, body, .container {
 .content .search .search-results {
     overflow: auto;
     height: calc(100% - 97px);
+    /* This is a container with no padding, add back
+       some right padding to make some space before the
+       scrollbar. TODO: really? */
+    padding-right: 0px; /*0.2em;*/
+}
+
+.content .search .search-results .row {
+    border-top: 1px black dashed;
+    padding: 0.2em 0;
+}
+
+.content .search .search-results .row:nth-child(1) {
+    border-top: none;
 }
 
 .content .search .search-results.with-button {
