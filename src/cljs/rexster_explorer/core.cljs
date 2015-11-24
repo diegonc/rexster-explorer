@@ -22,15 +22,21 @@
                       vis-data
                       vis-options) )
 
-;; Test Graph
-(let [nodes (.-nodes vis-data)
-      edges (.-edges vis-data)]
-  (.add nodes #js [#js {"id" 1 "label" "A"}
-                   #js {"id" 2 "label" "B"}])
-  (.add edges #js {"id" "e1"
-                   "from" 1
-                   "to" 2
-                   "label" "Search and add vertices or edges"}))
+;; Build introductory graph
+(defn build-introductory-graph
+  [data]
+  (let [nodes (.-nodes data)
+        edges (.-edges data)]
+    (.clear nodes)
+    (.add nodes #js [#js {"id" 1 "label" "A"}
+                     #js {"id" 2 "label" "B"}])
+    (.clear edges)
+    (.add edges #js {"id" "e1"
+                     "from" 1
+                     "to" 2
+                     "label" "Search and add vertices or edges"})))
+
+(build-introductory-graph vis-data)
 
 (defonce app-state
   (atom {:current-graph "tinkergraph"
