@@ -226,9 +226,9 @@
   (render-state
    [_ state]
    (let [current-graph (-> data :current-graph data)
-         results-class (if (:with-button state)
-                         "search-results with-button"
-                         "search-results")]
+         results-class (str "search-results"
+                            (if (:with-button state)
+                              " with-button"))]
      (dom/div
       {:class "search"}
       (om/build search-box current-graph
