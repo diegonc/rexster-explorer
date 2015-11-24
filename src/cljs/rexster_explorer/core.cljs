@@ -40,7 +40,7 @@
 
 (defonce app-state
   (atom {:current-graph "tinkergraph"
-         "tinkergraph" {:graph (rexster/make-graph "192.168.1.6:8182" "tinkergraph")}}))
+         "tinkergraph" {:graph (rexster/make-graph "localhost:8182" "tinkergraph")}}))
 
 (defcomponent graph-information [data owner]
   (render [_]
