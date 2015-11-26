@@ -219,7 +219,9 @@
          "No results found for the given query."))
        (dom/div
         {:class "container with-no-padding"}
-        (om/build-all search-result results {:key :key}))))))
+        (om/build-all search-result results
+                      {:key :key
+                       :init-state {:events-chan (:events-chan state)}}))))))
 
 (defmulti graph-query-op-dispatch
   "Graph query op dispatcher."
