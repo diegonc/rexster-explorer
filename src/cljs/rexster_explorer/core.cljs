@@ -11,6 +11,8 @@
 
 (enable-console-print!)
 
+(defn- log [x] (println x) x)
+
 (defonce vis-options (clj->js
                       {:layout {:randomSeed 602538}
                        :nodes {:shadow true
@@ -37,6 +39,35 @@
                      "label" "Search and add vertices or edges"})))
 
 (build-introductory-graph vis-data)
+
+(defn vis-make-node [rexster-vertex]
+  ;; TODO: make this process a graph setting
+  {:id (:_id rexster-vertex)
+   :label (:name rexster-vertex)})
+
+(defn vis-make-edge [rexster-edge]
+  ;; TODO: make this process a graph setting
+  {:id (:_id rexster-edge)
+   :from (:_outV rexster-edge)
+   :to (:_inV rexster-edge)
+   :label (:_label rexster-edge)})
+
+;; TODO: build incrementally
+(defn vis-build-current-graph [graph vis-data]
+  (let [node-dataset (.-nodes vis-data)
+        edge-dataset (.-edges vis-data)
+        nodes (->> graph
+                   :vertices
+                   (map second)
+                   (map vis-make-node))
+        edges (->> graph
+                   :edges
+                   (map second)
+                   (map vis-make-edge))]
+    (.clear node-dataset)
+    (.add node-dataset (clj->js nodes))
+    (.clear edge-dataset)
+    (.add edge-dataset (clj->js edges))))
 
 (defonce app-state
   (atom {:current-graph "tinkergraph"
@@ -144,6 +175,33 @@
           "edge"   (edges (:_id item))
           false)))
 
+;; TODO: put message in events channel
+(defn search-result-add-item [graph-state item]
+  (let [_type (:_type item)
+        _id (:_id item)]
+    (condp = _type
+      "vertex"
+      (go (let [graph (:graph graph-state)
+                {v? :success v :results} (<! (rg/get-vertex graph _id))]
+            (if v?
+              (do
+                (om/transact! graph-state :vertices #(assoc % _id v))
+                (vis-build-current-graph @graph-state vis-data))
+              ;; TODO: handle errors
+              (:message v))))
+      "edge"
+      (go (let [graph (:graph graph-state)
+                {e? :success e :results} (<! (rg/get-edge graph _id))
+                {o? :success o :results} (<! (rg/get-vertex graph (:_outV e)))
+                {i? :success i :results} (<! (rg/get-vertex graph (:_inV e)))]
+            (if (and e? o? i?)
+              (do (om/transact! graph-state :vertices
+                                #(assoc % (:_id o) o (:_id i) i))
+                  (om/transact! graph-state :edges #(assoc % _id e))
+                  (vis-build-current-graph @graph-state vis-data))
+              ;; TODO: handle errors
+              (map :message [e o i])))))))
+
 ;; TODO: add event
 (defcomponent search-result
   " Render a given search result.
@@ -184,7 +242,9 @@
     (if (and (search-result-element? item)
              (not (search-result-present? graph item)))
       [(dom/div {:class "ten columns"} (str item))
-       (dom/div {:class "two columns"} "Add")]
+       (dom/div {:class "two columns"
+                 :on-click #(search-result-add-item graph item)}
+                "Add")]
       (dom/div {:class "twelve columns"} (str item))))))
 
 (defn search-results-make-item [index result]
