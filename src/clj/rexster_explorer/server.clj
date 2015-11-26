@@ -11,6 +11,8 @@
             [clj-http.client :as http]
             [clojure.data.json :as json]))
 
+(defn- log [x] (println x) x)
+
 (defroutes graph-proxy
   (GET "/graph-proxy/:eurl" [eurl :as request]
        (let [resp (-> eurl
