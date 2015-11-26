@@ -1,7 +1,7 @@
 (ns rexster-explorer.http-rexster-graph
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [rexster-explorer.rexster-graph :as rg]
-            [cljs.core.async :as async :refer [<!]]
+            [cljs.core.async :as async :refer [<! to-chan]]
             [cemerick.url :refer [url url-encode]]
             [cljs-http.client :as http]))
 
@@ -55,6 +55,10 @@
             {:success false
              :results messages}))))))
 
+(defn- make-error-response [msg]
+  {:success false
+   :results {:message msg}})
+
 (defn make-graph [server graph]
   (let [base-uri
         (url (str "http://"
@@ -67,12 +71,18 @@
       (get-graph-uri [_] (str base-uri))
       rg/RexsterGraph
       (get-vertex [_ id]
-        (get-uri [base-uri "vertices" (url-encode id)]))
+        (if (nil? id)
+          (to-chan [(make-error-response "Vertex id may not be null")])
+          (get-uri [base-uri "vertices" (url-encode id)])))
       (get-edge [_ id]
-        (get-uri [base-uri "edges" (url-encode id)]))
+        (if (nil? id)
+          (to-chan [(make-error-response "Edge id may not be null")])
+          (get-uri [base-uri "edges" (url-encode id)])))
       (get-both-edges [_ id]
-        (get-uri [base-uri "vertices"
-                  (url-encode id) "bothE"]))
+        (if (nil? id)
+          (to-chan [(make-error-response "Vertex id may not be null")])
+          (get-uri [base-uri "vertices"
+                    (url-encode id) "bothE"])))
       (get-neighbourhood [this id]
         (go
           (let [edges (<! (rg/get-both-edges this id))
