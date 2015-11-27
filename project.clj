@@ -5,8 +5,8 @@
             :url "http://opensource.org/licenses/GPL-3.0"}
 
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.122"]
-                 [org.clojure/core.async "0.2.371"]
+                 [org.clojure/clojurescript "1.7.170"]
+                 [org.clojure/core.async "0.2.374"]
                  [org.omcljs/om "0.9.0"]
                  [prismatic/om-tools "0.3.12"]
                  [com.cemerick/url "0.1.1"]
@@ -17,8 +17,8 @@
                  [bk/ring-gzip "0.1.1"]
                  [cljsjs/vis "4.9.0-1"]]
 
-  :plugins [[lein-cljsbuild "1.1.0"]
-            [lein-figwheel "0.4.1"]]
+  :plugins [[lein-cljsbuild "1.1.1"]
+            [lein-figwheel "0.5.0-2"]]
 
   :source-paths ["src/clj"]
   :main rexster-explorer.server
