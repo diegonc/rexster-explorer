@@ -34,8 +34,7 @@
               :source-paths ["src/cljs"]
               :jar true
               :figwheel {:websocket-host :js-client-host
-;                         :on-jsload "rexster-explorer.core/on-js-reload"
-                        }
+                         :on-jsload "rexster-explorer.core/on-jsload"}
               :compiler {:main rexster-explorer.core
                          :asset-path "js/compiled/out"
                          :output-to "resources/public/js/compiled/rexster_explorer.js"

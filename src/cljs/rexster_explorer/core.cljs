@@ -19,18 +19,9 @@
                                :shape :circle}
                        :edges {:arrows {:to {:enabled true
                                              :scaleFactor 0.745}}}}))
-(defonce vis-data #js {"nodes" (js/vis.DataSet.)
-                       "edges" (js/vis.DataSet.)})
-(defonce vis-network (js/vis.Network.
-                      (. js/document (getElementById "graph-render"))
-                      vis-data
-                      vis-options) )
 
 ;; Build introductory graph
-(defn build-introductory-graph
-  [data]
-  (let [nodes (.-nodes data)
-        edges (.-edges data)]
+(defn build-introductory-graph [nodes edges]
     (.clear nodes)
     (.add nodes #js [#js {"id" 1 "label" "A"}
                      #js {"id" 2 "label" "B"}])
@@ -38,9 +29,20 @@
     (.add edges #js {"id" "e1"
                      "from" 1
                      "to" 2
-                     "label" "Search and add vertices or edges"})))
+                     "label" "Search and add vertices or edges"}))
 
-(build-introductory-graph vis-data)
+(defn vis-make-introductory-graph []
+  (let [nodes (js/vis.DataSet.)
+        edges (js/vis.DataSet.)]
+    (build-introductory-graph nodes edges)
+    #js {"nodes" nodes
+         "edges" edges}))
+
+(defonce vis-data (vis-make-introductory-graph))
+(defonce vis-network (js/vis.Network.
+                      (. js/document (getElementById "graph-render"))
+                      vis-data
+                      vis-options) )
 
 (defn vis-make-node [rexster-vertex]
   ;; TODO: make this process a graph setting
@@ -386,3 +388,13 @@
   graph-query
   app-state
   {:target (. js/document (getElementById "graph-search"))})
+
+(defn on-jsload [& args]
+  (let [state @app-state
+        graph (-> state :current-graph state (#(or % {})))
+        edges (:edges graph)
+        nodes (:vertices graph)]
+    (if (and (seq edges) (seq nodes))
+      (vis-build-current-graph graph vis-data)
+      (build-introductory-graph (.-nodes vis-data)
+                                (.-edges vis-data)))))
