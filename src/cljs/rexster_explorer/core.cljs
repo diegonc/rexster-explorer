@@ -112,7 +112,7 @@
     are set in its initial state:
       - :legend      Legend of the fieldset that contains the elements
                      of this component.
-                     (Default: \"Search Graph Context\")
+                     (Default: \"Search (Graph Context)\")
 
       - :prefix      The text to display in the prefix
                      area of the input box.
@@ -140,7 +140,7 @@
   [current-graph owner]
   (init-state [_] {:prefix "g."
                    :placeholder "Gremlin query used to search the graph"
-                   :legend "Search Graph Context"
+                   :legend "Search (Graph Context)"
                    :with-button true})
   (render-state
    [this state]
