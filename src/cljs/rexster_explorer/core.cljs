@@ -16,7 +16,9 @@
 (defonce vis-options (clj->js
                       {:layout {:randomSeed 602538}
                        :nodes {:shadow true
-                               :shape :circle}}))
+                               :shape :circle}
+                       :edges {:arrows {:to {:enabled true
+                                             :scaleFactor 0.745}}}}))
 (defonce vis-data #js {"nodes" (js/vis.DataSet.)
                        "edges" (js/vis.DataSet.)})
 (defonce vis-network (js/vis.Network.
