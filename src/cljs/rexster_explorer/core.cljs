@@ -14,7 +14,7 @@
 (defn- log [x] (println x) x)
 
 (defonce vis-options (clj->js
-                      {:layout {:randomSeed 602538}
+                      {:layout {:randomSeed 994841}
                        :nodes {:shadow true
                                :shape :circle}
                        :edges {:arrows {:to {:enabled true
