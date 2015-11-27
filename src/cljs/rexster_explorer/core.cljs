@@ -4,7 +4,7 @@
             [om.core :as om :include-macros true]
             [om-tools.dom :as dom :include-macros true]
             [om-tools.core :refer-macros [defcomponent]]
-            [cljs.core.async :refer [<! >! chan]]
+            [cljs.core.async :refer [<! >! chan close!]]
             [rexster-explorer.http-rexster-graph :as rexster]
             [rexster-explorer.rexster-graph :as rg]
             [cljsjs.vis]))
@@ -370,18 +370,26 @@
 
 (defcomponent graph-query [data owner]
   (init-state [_] {:events-chan (chan)
+                   :term-chan   (chan)
                    :with-button false
                    :query-state {:success :empty}})
   (will-mount
    [_]
-   (let [events-chan (om/get-state owner :events-chan)]
+   (let [events-chan (om/get-state owner :events-chan)
+         term-chan   (om/get-state owner :term-chan)
+         channels    [events-chan term-chan]]
      (go (loop []
-           (let [event (<! events-chan)
-                 graph (-> data :current-graph data)]
-             (-> event
-                 (graph-query-op-build owner graph)
-                 (graph-query-op-dispatch owner)))
-           (recur)))))
+           (let [[msg channel] (alts! channels)]
+             (if (= term-chan channel)
+               (map close! channels)
+               (let [graph (-> data :current-graph data)]
+                 (-> msg
+                     (graph-query-op-build owner graph)
+                     (graph-query-op-dispatch owner))
+                 (recur))))))))
+  (will-unmount
+   [_]
+   (go (>! (om/get-state owner :term-chan) (log "graph-query: done"))))
   (render-state
    [_ state]
    (let [current-graph (-> data :current-graph data)
