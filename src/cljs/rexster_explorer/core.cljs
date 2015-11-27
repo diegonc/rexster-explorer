@@ -179,34 +179,13 @@
           "edge"   (edges (:_id item))
           false)))
 
-;; TODO: put message in events channel
-(defn search-result-add-item [graph-state item]
-  (let [_type (:_type item)
-        _id (:_id item)]
-    (condp = _type
-      "vertex"
-      (go (let [graph (:graph graph-state)
-                {v? :success v :results} (<! (rg/get-vertex graph _id))]
-            (if v?
-              (do
-                (om/transact! graph-state :vertices #(assoc % _id v))
-                (vis-build-current-graph @graph-state vis-data))
-              ;; TODO: handle errors
-              (:message v))))
-      "edge"
-      (go (let [graph (:graph graph-state)
-                {e? :success e :results} (<! (rg/get-edge graph _id))
-                {o? :success o :results} (<! (rg/get-vertex graph (:_outV e)))
-                {i? :success i :results} (<! (rg/get-vertex graph (:_inV e)))]
-            (if (and e? o? i?)
-              (do (om/transact! graph-state :vertices
-                                #(assoc % (:_id o) o (:_id i) i))
-                  (om/transact! graph-state :edges #(assoc % _id e))
-                  (vis-build-current-graph @graph-state vis-data))
-              ;; TODO: handle errors
-              (map :message [e o i])))))))
+(defn search-result-add-item [owner-state item]
+  (let [chan (:events-chan owner-state)]
+    (go (>! chan
+            {:event-type :search-result-add-element
+             :element-type (:_type item)
+             :element-id (:_id item)}))))
 
-;; TODO: add event
 (defcomponent search-result
   " Render a given search result.
 
@@ -247,7 +226,7 @@
              (not (search-result-present? graph item)))
       [(dom/div {:class "ten columns"} (str item))
        (dom/div {:class "two columns"
-                 :on-click #(search-result-add-item graph item)}
+                 :on-click #(search-result-add-item state item)}
                 "Add")]
       (dom/div {:class "twelve columns"} (str item))))))
 
@@ -321,20 +300,73 @@
                       :error (:error results))
                (dissoc xn :message :error)))))))))
 
+;;    Adds a graph element to the appropiate visualization's
+;;    dataset.
+;;
+;;      op is { :op-type      :add-graph-element
+;;              :element-type Type of the element to add
+;;              :element-id   Id of the element to add
+;;              :graph-state  Cursor to the currently selected
+;;                            graph's state. The element to add
+;;                            is looked up in the graph it
+;;                            represents.
+;;              :vis-dataset  The visualization's dataset where
+;;                            a representation of the element
+;;                            is added.
+;;            }
+(defmethod graph-query-op-dispatch :add-graph-element
+  [op owner]
+  (let [_type (:element-type op)
+        _id (:element-id op)
+        graph-state (:graph-state op)
+        graph (:graph graph-state)
+        vis-data (:vis-dataset op)]
+    (condp = _type
+      "vertex"
+      (go (let [{v? :success v :results} (<! (rg/get-vertex graph _id))]
+            (if v?
+              (do
+                (om/transact! graph-state :vertices #(assoc % _id v))
+                (vis-build-current-graph @graph-state vis-data))
+              ;; TODO: handle errors
+              (:message v))))
+      "edge"
+      (go (let [{e? :success e :results} (<! (rg/get-edge graph _id))
+                {o? :success o :results} (<! (rg/get-vertex graph (:_outV e)))
+                {i? :success i :results} (<! (rg/get-vertex graph (:_inV e)))]
+            (if (and e? o? i?)
+              (do (om/transact! graph-state :vertices
+                                #(assoc % (:_id o) o (:_id i) i))
+                  (om/transact! graph-state :edges #(assoc % _id e))
+                  (vis-build-current-graph @graph-state vis-data))
+              ;; TODO: handle errors
+              (map :message [e o i])))))))
+
 (defmulti graph-query-op-build
   "Takes an event received from the graph-query's event channel
    and builds an op suitable for the graph-query-op-dispatch
    multi method."
-  (fn [event owner graph] (:event-type event)))
+  (fn [event owner graph-state] (:event-type event)))
 
 ;; Process a :search-box-enter-query event by building
 ;; an :exec-graph-query op which will execute the query
 ;; requested by the event.
 (defmethod graph-query-op-build :search-box-enter-query
-  [op owner graph]
+  [op owner graph-state]
   {:op-type :exec-graph-query
    :query (str "g." (:data op))
-   :graph graph})
+   :graph (:graph graph-state)})
+
+;; Process a :search-result-add-element event by
+;; building an :add-graph-element op which will
+;; update the visualization.
+(defmethod graph-query-op-build :search-result-add-element
+  [op owner graph-state]
+  {:op-type      :add-graph-element
+   :element-type (:element-type op)
+   :element-id   (:element-id op)
+   :graph-state  graph-state
+   :vis-dataset  vis-data})
 
 (defcomponent graph-query [data owner]
   (init-state [_] {:events-chan (chan)
@@ -345,7 +377,7 @@
    (let [events-chan (om/get-state owner :events-chan)]
      (go (loop []
            (let [event (<! events-chan)
-                 graph (-> data :current-graph data :graph)]
+                 graph (-> data :current-graph data)]
              (-> event
                  (graph-query-op-build owner graph)
                  (graph-query-op-dispatch owner)))
