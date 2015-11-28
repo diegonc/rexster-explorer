@@ -56,7 +56,6 @@
    :to (:_inV rexster-edge)
    :label (:_label rexster-edge)})
 
-;; TODO: build incrementally
 (defn vis-build-current-graph [graph vis-data]
   (let [node-dataset (.-nodes vis-data)
         edge-dataset (.-edges vis-data)
@@ -72,6 +71,14 @@
     (.add node-dataset (clj->js nodes))
     (.clear edge-dataset)
     (.add edge-dataset (clj->js edges))))
+
+(defn vis-add-vertex [vis-data v]
+  (.update (.-nodes vis-data)
+           (clj->js (vis-make-node v))))
+
+(defn vis-add-edge [vis-data e]
+  (.update (.-edges vis-data)
+           (clj->js (vis-make-edge e))))
 
 (defonce app-state
   (atom {:current-graph "tinkergraph"
@@ -300,6 +307,10 @@
                       :error (:error results))
                (dissoc xn :message :error)))))))))
 
+(defn graph-state-has-elements? [graph-state]
+  (or (seq (:vertices graph-state))
+      (seq (:edges graph-state))))
+
 ;;    Adds a graph element to the appropiate visualization's
 ;;    dataset.
 ;;
@@ -325,9 +336,11 @@
       "vertex"
       (go (let [{v? :success v :results} (<! (rg/get-vertex graph _id))]
             (if v?
-              (do
+              (let [rebuild? (not (graph-state-has-elements? graph-state))]
                 (om/transact! graph-state :vertices #(assoc % _id v))
-                (vis-build-current-graph @graph-state vis-data))
+                (if rebuild?
+                  (vis-build-current-graph @graph-state vis-data)
+                  (vis-add-vertex vis-data v)))
               ;; TODO: handle errors
               (:message v))))
       "edge"
@@ -335,10 +348,16 @@
                 {o? :success o :results} (<! (rg/get-vertex graph (:_outV e)))
                 {i? :success i :results} (<! (rg/get-vertex graph (:_inV e)))]
             (if (and e? o? i?)
-              (do (om/transact! graph-state :vertices
-                                #(assoc % (:_id o) o (:_id i) i))
-                  (om/transact! graph-state :edges #(assoc % _id e))
-                  (vis-build-current-graph @graph-state vis-data))
+              (let [rebuild? (not (graph-state-has-elements? graph-state))]
+                (om/transact! graph-state :vertices
+                              #(assoc % (:_id o) o (:_id i) i))
+                (om/transact! graph-state :edges #(assoc % _id e))
+                (if rebuild?
+                  (vis-build-current-graph @graph-state vis-data)
+                  (do
+                    (vis-add-vertex vis-data o)
+                    (vis-add-vertex vis-data i)
+                    (vis-add-edge vis-data e))))
               ;; TODO: handle errors
               (map :message [e o i])))))))
 
@@ -389,7 +408,7 @@
                  (recur))))))))
   (will-unmount
    [_]
-   (go (>! (om/get-state owner :term-chan) (log "graph-query: done"))))
+   (go (>! (om/get-state owner :term-chan) "graph-query: done")))
   (render-state
    [_ state]
    (let [current-graph (-> data :current-graph data)
