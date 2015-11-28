@@ -434,7 +434,7 @@
         graph (-> state :current-graph state (#(or % {})))
         edges (:edges graph)
         nodes (:vertices graph)]
-    (if (and (seq edges) (seq nodes))
+    (if (or (seq edges) (seq nodes))
       (vis-build-current-graph graph vis-data)
       (build-introductory-graph (.-nodes vis-data)
                                 (.-edges vis-data)))))
