@@ -83,9 +83,15 @@
 
 (defonce app-state
   (atom {:current-graph "tinkergraph"
-         "tinkergraph" {:graph (rexster/make-graph "localhost:8182" "tinkergraph")
-                        :vertices {}
-                        :edges {}}}))
+         :available-graphs
+         {"tinkergraph" {:graph (rexster/make-graph "localhost:8182" "tinkergraph")
+                         :vertices {}
+                         :edges {}}}}))
+
+(defn get-current-graph-state [cursor]
+  (let [current-graph (:current-graph cursor)
+        available-graphs (:available-graphs cursor)]
+    (available-graphs current-graph)))
 
 (defn react-build [component props & children]
   (let [React (.-React js/window)]
@@ -112,7 +118,7 @@
 
 (defcomponent graph-information [data owner]
   (render [_]
-    (let [graph (-> data :current-graph data :graph)
+    (let [graph (:graph (get-current-graph-state data))
           graph-name (rexster/get-graph-name graph)
           graph-uri (rexster/get-graph-uri graph)]
       (dom/div
@@ -427,7 +433,7 @@
            (let [[msg channel] (alts! channels)]
              (if (= term-chan channel)
                (map close! channels)
-               (let [graph (-> data :current-graph data)]
+               (let [graph (get-current-graph-state data)]
                  (-> msg
                      (graph-query-op-build owner graph)
                      (graph-query-op-dispatch owner))
@@ -437,7 +443,7 @@
    (go (>! (om/get-state owner :term-chan) "graph-query: done")))
   (render-state
    [_ state]
-   (let [current-graph (-> data :current-graph data)
+   (let [current-graph (get-current-graph-state data)
          results-class (str "search-results"
                             (if (:with-button state)
                               " with-button"))]
@@ -482,7 +488,7 @@
 
 (defn on-jsload [& args]
   (let [state @app-state
-        graph (-> state :current-graph state (#(or % {})))
+        graph (or (get-current-graph-state state) {})
         edges (:edges graph)
         nodes (:vertices graph)]
     (if (or (seq edges) (seq nodes))
