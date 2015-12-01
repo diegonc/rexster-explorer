@@ -1,7 +1,7 @@
 /* HTML tag style overrides */
 
 /* Main containers as high as the browser window */
-html, body, .container {
+html, body, .container, #outer-container {
     height: 100%;
 }
 
@@ -19,23 +19,60 @@ html, body, .container {
 
 /* Style header */
 .header {
-    text-align: center;
     height: 120px;
     overflow: hidden;
 }
 
-/* 1. Graph information */
+/* and all its children */
 .header div {
+    height: 100%;
+}
+
+/* 1. Graph information */
+.header .graph-info div {
     width: 300px;
     margin: auto;
     text-align: right;
 }
 
-.header div h6 {
+.header .graph-info div h6 {
     font-family: monospace;
 }
 
-/* TODO: Drawer handle */
+/* 1.1. Sidebar menu */
+#burger-menu .bm-menu {
+    background-color: #373a47;
+    color: white;
+}
+
+#burger-menu .bm-morph-shape {
+  fill: #373a47;
+}
+
+#burger-menu .bm-burger-icon {
+    background-color: #d1d1d1;
+    border-radius: 4px;
+}
+
+#graph-menu .bm-cross {
+    background: #bdc3c7;
+}
+
+#graph-menu .bm-item-list .menu-container {
+    height: 100%;
+}
+
+#graph-menu .bm-item-list h2 {
+    margin: 0 auto;
+    padding: 1em 1em;
+    height: 130px;
+}
+
+#graph-menu .bm-item-list .menu-content {
+    height: calc(100% - 130px);
+    padding: 0 0.5em;
+    overflow: auto;
+}
 
 /* 2. Content area */
 .content {

@@ -7,7 +7,8 @@
             [cljs.core.async :refer [<! >! chan close!]]
             [rexster-explorer.http-rexster-graph :as rexster]
             [rexster-explorer.rexster-graph :as rg]
-            [cljsjs.vis]))
+            [cljsjs.vis]
+            [cljsjs.react-burger-menu]))
 
 (enable-console-print!)
 
@@ -86,14 +87,39 @@
                         :vertices {}
                         :edges {}}}))
 
+(defn react-build [component props & children]
+  (let [React (.-React js/window)]
+    (.createElement React component
+                    (clj->js props)
+                    children)))
+
+(defcomponent graph-menu [data owner]
+  (render
+   [_]
+   (let [menu (.-slide js/BurgerMenu)]
+     (react-build
+      menu
+      {:id "graph-menu"
+       :className "the-class"
+       :outerContainerId "outer-container"
+       :pageWrapId "page-wrap"}
+      (dom/div
+       {:class "menu-container"}
+       (dom/h2 "Graphs List")
+       (dom/div
+        {:class "menu-content"}
+        "Menu content"))))))
+
 (defcomponent graph-information [data owner]
   (render [_]
     (let [graph (-> data :current-graph data :graph)
           graph-name (rexster/get-graph-name graph)
           graph-uri (rexster/get-graph-uri graph)]
       (dom/div
-       (dom/h1 graph-name)
-       (dom/h6 graph-uri)))))
+       {:class "graph-info"}
+       (dom/div
+        (dom/h1 graph-name)
+        (dom/h6 graph-uri))))))
 
 (defn search-box-submit-query
   "Puts the query, if set, in the events channel"
@@ -435,6 +461,12 @@
              (om/build search-results {:graph current-graph
                                        :results (-> state :results)}
                        {:init-state {:events-chan (:events-chan state)}})))))))))
+
+;; Attach burger menu
+(om/root
+ graph-menu
+ app-state
+ {:target (. js/document (getElementById "burger-menu"))})
 
 ;; Attach graph information component
 (om/root

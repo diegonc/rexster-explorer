@@ -15,7 +15,8 @@
                  [compojure "1.4.0"]
                  [ring "1.4.0"]
                  [bk/ring-gzip "0.1.1"]
-                 [cljsjs/vis "4.9.0-1"]]
+                 [cljsjs/vis "4.9.0-1"]
+                 [cljsjs/react-burger-menu "1.1.6-0"]]
 
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.5.0-2"]]

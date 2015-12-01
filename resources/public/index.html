@@ -29,93 +29,103 @@
     <link rel="stylesheet" href="css/style.css">
   </head>
   <body>
-    <div class="container">
-      <div class="row header">
-        <div class="twelve columns header" id="graph-info"></div>
-      </div>
-      <div class="row content">
-        <div class="three columns search" id="graph-search">
-          <div class="search">
-            <fieldset class="with-button">
-              <legend>Graph Search</legend>
-              <div class="input-like search-input-container">
-                <input class="not-input search-prefix" type="text" value="g." disabled />
-                <input class="not-input search-text" type="text" placeholder="Gremlin query used to search the graph" />
-              </div>
-              <div class="search-button-container">
-                <button type="button">Search</button>
-              </div>
-            </fieldset>
-            <div class="search-results with-button container with-no-padding">
-              <div class="row">
-                <div class="ten columns">Lalal</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">aiioa</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">uiqoioq</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">wtwyue</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">Lalal</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">aiioa</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">uiqoioq</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">wtwyue</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">Lalal</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">aiioa</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">uiqoioq</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">wtwyue</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">Lalal</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">aiioa</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">uiqoioq</div>
-                <div class="two columns">Add</div>
-              </div>
-              <div class="row">
-                <div class="ten columns">wtwyue</div>
-                <div class="two columns">Add</div>
+    <div id="outer-container">
+      <div id="burger-menu"></div>
+      <div id="page-wrap" class="container">
+        <div class="row header">
+          <div class="twelve columns" id="graph-info">
+            <div class="graph-info">
+              <div>
+                <h1>tinkergraph</h1>
+                <h6>http://localhost:8182/graphs/tinkergraph</h6>
               </div>
             </div>
           </div>
         </div>
-        <div class="nine columns" id="graph-render">
-          vis.js Graph
+        <div class="row content">
+          <div class="three columns search" id="graph-search">
+            <div class="search">
+              <fieldset class="with-button">
+                <legend>Graph Search</legend>
+                <div class="input-like search-input-container">
+                  <input class="not-input search-prefix" type="text" value="g." disabled />
+                  <input class="not-input search-text" type="text" placeholder="Gremlin query used to search the graph" />
+                </div>
+                <div class="search-button-container">
+                  <button type="button">Search</button>
+                </div>
+              </fieldset>
+              <div class="search-results with-button container with-no-padding">
+                <div class="row">
+                  <div class="ten columns">Lalal</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">aiioa</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">uiqoioq</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">wtwyue</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">Lalal</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">aiioa</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">uiqoioq</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">wtwyue</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">Lalal</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">aiioa</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">uiqoioq</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">wtwyue</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">Lalal</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">aiioa</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">uiqoioq</div>
+                  <div class="two columns">Add</div>
+                </div>
+                <div class="row">
+                  <div class="ten columns">wtwyue</div>
+                  <div class="two columns">Add</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="nine columns" id="graph-render">
+            vis.js Graph
+          </div>
         </div>
     </div>
 
