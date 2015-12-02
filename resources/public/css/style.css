@@ -1,7 +1,7 @@
 /* HTML tag style overrides */
 
 /* Main containers as high as the browser window */
-html, body, .container, #outer-container {
+html, body, .container, #app, #outer-container {
     height: 100%;
 }
 

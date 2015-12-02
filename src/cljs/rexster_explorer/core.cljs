@@ -41,12 +41,6 @@
     #js {"nodes" nodes
          "edges" edges}))
 
-(defonce vis-data (vis-make-introductory-graph))
-(defonce vis-network (js/vis.Network.
-                      (. js/document (getElementById "graph-render"))
-                      vis-data
-                      vis-options) )
-
 (defn vis-make-node [rexster-vertex]
   ;; TODO: make this process a graph setting
   {:id (:_id rexster-vertex)
@@ -106,13 +100,24 @@
                     (to-array (flatten children)))))
 
 (defn vis-reload-data [app-state]
-  (let [graph (or (get-current-graph-state app-state) {})
+  (let [vis-data (-> app-state :visualization :data)
+        graph (or (get-current-graph-state app-state) {})
         edges (:edges graph)
         nodes (:vertices graph)]
     (if (or (seq edges) (seq nodes))
       (vis-build-current-graph graph vis-data)
       (build-introductory-graph (.-nodes vis-data)
                                 (.-edges vis-data)))))
+
+(defn vis-setup-visualization [node app-state]
+  (let [vis-data (vis-make-introductory-graph)
+        vis-network (js/vis.Network.
+                     node
+                     vis-data
+                     vis-options)]
+    (om/update! app-state :visualization
+                {:data    vis-data
+                 :network vis-network})))
 
 (defn activate-graph [cursor graph]
   (om/transact! cursor :current-graph
@@ -451,27 +456,27 @@
   "Takes an event received from the graph-query's event channel
    and builds an op suitable for the graph-query-op-dispatch
    multi method."
-  (fn [event owner graph-state] (:event-type event)))
+  (fn [event owner app-state] (:event-type event)))
 
 ;; Process a :search-box-enter-query event by building
 ;; an :exec-graph-query op which will execute the query
 ;; requested by the event.
 (defmethod graph-query-op-build :search-box-enter-query
-  [op owner graph-state]
+  [op owner app-state]
   {:op-type :exec-graph-query
    :query (str "g." (:data op))
-   :graph (:graph graph-state)})
+   :graph (:graph (get-current-graph-state app-state))})
 
 ;; Process a :search-result-add-element event by
 ;; building an :add-graph-element op which will
 ;; update the visualization.
 (defmethod graph-query-op-build :search-result-add-element
-  [op owner graph-state]
+  [op owner app-state]
   {:op-type      :add-graph-element
    :element-type (:element-type op)
    :element-id   (:element-id op)
-   :graph-state  graph-state
-   :vis-dataset  vis-data})
+   :graph-state  (get-current-graph-state app-state)
+   :vis-dataset  (-> app-state :visualization :data)})
 
 (defcomponent graph-query [data owner]
   (init-state [_] {:events-chan (chan)
@@ -487,10 +492,9 @@
            (let [[msg channel] (alts! channels)]
              (if (= term-chan channel)
                (map close! channels)
-               (let [graph (get-current-graph-state
-                            (om/root-cursor app-state))]
+               (let [root-cursor (om/root-cursor app-state)]
                  (-> msg
-                     (graph-query-op-build owner graph)
+                     (graph-query-op-build owner root-cursor)
                      (graph-query-op-dispatch owner))
                  (recur))))))))
   (will-unmount
@@ -530,23 +534,48 @@
                                        :results (-> state :results)}
                        {:init-state {:events-chan (:events-chan state)}})))))))))
 
-;; Attach burger menu
-(om/root
- graph-menu
- app-state
- {:target (. js/document (getElementById "burger-menu"))})
+;; Output visualization root element
+(defcomponent graph-visualization [root-cursor owner]
+  (did-mount
+   [_]
+   (let [node (log (om/get-node owner))]
+     (vis-setup-visualization node root-cursor)))
+  (render-state
+   [_ state]
+   (dom/div {:id (:id state)
+             :class (:class state)})))
 
-;; Attach graph information component
-(om/root
- graph-information
- app-state
- {:target (. js/document (getElementById "graph-info"))})
+;; Build page layout
+(defcomponent root-component [root-cursor owner]
+  (render
+   [_]
+   (dom/div
+    {:id "outer-container"}
+    (dom/div {:id "burger-menu"}
+             (om/build graph-menu root-cursor))
+    (dom/div
+     {:id "page-wrap" :class "container"}
+     (dom/div
+      {:class "row header"}
+      (dom/div {:id "graph-info"
+                :class "twelve columns"}
+               (om/build graph-information
+                         root-cursor)))
+     (dom/div
+      {:class "row content"}
+      (dom/div {:id "graph-search"
+                :class "three columns search"}
+               (om/build graph-query root-cursor))
+      (om/build graph-visualization root-cursor
+                {:init-state
+                 {:id "graph-render"
+                  :class "nine columns"}}))))))
 
-;; Attach graph query component
+;; Attach root component
 (om/root
-  graph-query
-  app-state
-  {:target (. js/document (getElementById "graph-search"))})
+ root-component
+ app-state
+ {:target (. js/document (getElementById "app"))})
 
 (defn on-jsload [& args]
   (let [state @app-state]
