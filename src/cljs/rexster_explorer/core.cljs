@@ -538,7 +538,7 @@
 (defcomponent graph-visualization [root-cursor owner]
   (did-mount
    [_]
-   (let [node (log (om/get-node owner))]
+   (let [node (om/get-node owner)]
      (vis-setup-visualization node root-cursor)))
   (render-state
    [_ state]
