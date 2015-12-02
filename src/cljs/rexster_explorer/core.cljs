@@ -120,9 +120,8 @@
                  :network vis-network})))
 
 (defn activate-graph [cursor graph]
-  (om/transact! cursor :current-graph
-                #(do graph))
-  (go (vis-reload-data @cursor)))
+  (om/update! cursor :current-graph graph)
+  (vis-reload-data @cursor))
 
 (defcomponent graph-menu-item [data owner]
   (render
