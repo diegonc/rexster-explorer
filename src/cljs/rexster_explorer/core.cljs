@@ -117,7 +117,7 @@
 (defn activate-graph [cursor graph]
   (om/transact! cursor :current-graph
                 #(do graph))
-  (vis-reload-data @cursor))
+  (go (vis-reload-data @cursor)))
 
 (defcomponent graph-menu-item [data owner]
   (render
