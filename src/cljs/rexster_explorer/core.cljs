@@ -93,6 +93,10 @@
         available-graphs (:available-graphs cursor)]
     (available-graphs current-graph)))
 
+(defn has-current-graph? [cursor]
+  (let [current (get-current-graph-state cursor)]
+    (not (nil? current))))
+
 (defn react-build [component props & children]
   (let [React (.-React js/window)]
     (.createElement React component
@@ -175,7 +179,8 @@
       menu
       {:id "graph-menu"
        :outerContainerId "outer-container"
-       :pageWrapId "page-wrap"}
+       :pageWrapId "page-wrap"
+       :initiallyOpened (not (has-current-graph? data))}
       (dom/div
        {:class "menu-container"}
        (dom/h2 "Graphs List")
@@ -568,17 +573,24 @@
       {:class "row header"}
       (dom/div {:id "graph-info"
                 :class "twelve columns"}
-               (om/build graph-information
-                         root-cursor)))
+               (if (has-current-graph? root-cursor)
+                 (om/build graph-information
+                           root-cursor))))
      (dom/div
       {:class "row content"}
       (dom/div {:id "graph-search"
                 :class "three columns search"}
-               (om/build graph-query root-cursor))
+               (if (has-current-graph? root-cursor)
+                 (om/build graph-query root-cursor)))
       (om/build graph-visualization root-cursor
                 {:init-state
                  {:id "graph-render"
                   :class "nine columns"}}))))))
+
+;; HACK Patch react-burger-menu
+(set! (.-slide js/BurgerMenu)
+      (js/patch_initially_opened_prop (.-slide js/BurgerMenu)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Attach root component
 (om/root
