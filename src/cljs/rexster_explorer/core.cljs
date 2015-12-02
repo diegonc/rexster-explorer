@@ -148,14 +148,24 @@
    (let [Accordion (.-Accordion js/ReactSanfona)
          AccordionItem (.-AccordionItem js/ReactSanfona)
          available-graphs (map first (:available-graphs data))]
-     (react-build
-      Accordion {}
-      (map
-       #(react-build AccordionItem {:title %}
-                     (om/build graph-menu-item
-                               {:cursor data
-                                :item %}))
-       available-graphs)))))
+     (dom/div
+      (dom/div
+       {:class "new-graph"}
+       (react-build
+        Accordion {:selectedIndex 1} ;; select none please
+        (react-build AccordionItem
+                     {:title "New Graph"}
+                     "TODO: New graph controls...")))
+      (dom/div
+       {:class "existing-graphs"}
+       (react-build
+        Accordion {}
+        (map
+         #(react-build AccordionItem {:title %}
+                       (om/build graph-menu-item
+                                 {:cursor data
+                                  :item %}))
+         available-graphs)))))))
 
 (defcomponent graph-menu [data owner]
   (render
