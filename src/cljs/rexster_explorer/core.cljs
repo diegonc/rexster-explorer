@@ -114,6 +114,30 @@
       (build-introductory-graph (.-nodes vis-data)
                                 (.-edges vis-data)))))
 
+(defn activate-graph [cursor graph]
+  (om/transact! cursor :current-graph
+                #(do graph))
+  (vis-reload-data @cursor))
+
+(defcomponent graph-menu-item [data owner]
+  (render
+   [_]
+   (dom/div
+    {:class "menu-item"}
+    (dom/div
+     {:class "settings"})
+    (dom/div
+     {:class "actions"}
+     (dom/button
+      {:type "button"
+       :class "delete"}
+      "Delete")
+     (dom/button
+      {:type "button"
+       :class "activate"
+       :on-click #(activate-graph (:cursor data) (:item data))}
+      "Activate")))))
+
 (defcomponent graph-menu-content [data owner]
   (render
    [_]
@@ -124,7 +148,9 @@
       Accordion {}
       (map
        #(react-build AccordionItem {:title %}
-                     (dom/div "Item body"))
+                     (om/build graph-menu-item
+                               {:cursor data
+                                :item %}))
        available-graphs)))))
 
 (defcomponent graph-menu [data owner]
@@ -460,7 +486,9 @@
            (let [[msg channel] (alts! channels)]
              (if (= term-chan channel)
                (map close! channels)
-               (let [graph (get-current-graph-state data)]
+               (let [graph (get-current-graph-state
+                            (om/ref-cursor
+                             (om/root-cursor app-state)))]
                  (-> msg
                      (graph-query-op-build owner graph)
                      (graph-query-op-dispatch owner))
