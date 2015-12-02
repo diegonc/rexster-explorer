@@ -497,6 +497,13 @@
   (will-unmount
    [_]
    (go (>! (om/get-state owner :term-chan) "graph-query: done")))
+  (will-receive-props
+   [_ next-props]
+   (let [previous-props (om/get-props owner)
+         previous-graph (:current-graph previous-props)
+         next-graph (:current-graph next-props)]
+     (when-not (= previous-graph next-graph)
+       (om/set-state! owner :query-state {:success :empty}))))
   (render-state
    [_ state]
    (let [current-graph (get-current-graph-state data)
