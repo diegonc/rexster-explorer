@@ -170,10 +170,11 @@
         (om/build graph-menu-content data)))))))
 
 (defcomponent graph-information [data owner]
-  (render [_]
-    (let [graph (:graph (get-current-graph-state data))
-          graph-name (rexster/get-graph-name graph)
-          graph-uri (rexster/get-graph-uri graph)]
+  (render
+   [_]
+   (let [graph (:graph (get-current-graph-state data))
+         graph-name (rexster/get-graph-name graph)
+         graph-uri (rexster/get-graph-uri graph)]
       (dom/div
        {:class "graph-info"}
        (dom/div
