@@ -104,6 +104,15 @@
                     (clj->js props)
                     (to-array (flatten children)))))
 
+(defn vis-reload-data [app-state]
+  (let [graph (or (get-current-graph-state app-state) {})
+        edges (:edges graph)
+        nodes (:vertices graph)]
+    (if (or (seq edges) (seq nodes))
+      (vis-build-current-graph graph vis-data)
+      (build-introductory-graph (.-nodes vis-data)
+                                (.-edges vis-data)))))
+
 (defcomponent graph-menu-content [data owner]
   (render
    [_]
@@ -504,11 +513,5 @@
   {:target (. js/document (getElementById "graph-search"))})
 
 (defn on-jsload [& args]
-  (let [state @app-state
-        graph (or (get-current-graph-state state) {})
-        edges (:edges graph)
-        nodes (:vertices graph)]
-    (if (or (seq edges) (seq nodes))
-      (vis-build-current-graph graph vis-data)
-      (build-introductory-graph (.-nodes vis-data)
-                                (.-edges vis-data)))))
+  (let [state @app-state]
+    (vis-reload-data state)))
