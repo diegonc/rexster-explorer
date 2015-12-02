@@ -13,7 +13,8 @@
 
 (enable-console-print!)
 
-(defn- log [x] (println x) x)
+(defn- log [x & tag]
+  (.log js/console (apply str tag) x) x)
 
 (defonce vis-options (clj->js
                       {:layout {:randomSeed 994841}
