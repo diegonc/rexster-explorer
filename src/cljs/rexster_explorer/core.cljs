@@ -19,7 +19,7 @@
 (defonce vis-options (clj->js
                       {:layout {:randomSeed 994841}
                        :nodes {:shadow true
-                               :shape :circle}
+                               :shape :dot}
                        :edges {:arrows {:to {:enabled true
                                              :scaleFactor 0.745}}}}))
 
