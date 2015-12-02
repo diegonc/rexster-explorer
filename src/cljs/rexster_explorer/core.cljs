@@ -488,8 +488,7 @@
              (if (= term-chan channel)
                (map close! channels)
                (let [graph (get-current-graph-state
-                            (om/ref-cursor
-                             (om/root-cursor app-state)))]
+                            (om/root-cursor app-state))]
                  (-> msg
                      (graph-query-op-build owner graph)
                      (graph-query-op-dispatch owner))
