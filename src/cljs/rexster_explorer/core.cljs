@@ -87,7 +87,11 @@
          :available-graphs
          {"tinkergraph" {:graph (rexster/make-graph "localhost:8182" "tinkergraph")
                          :vertices {}
-                         :edges {}}}}))
+                         :edges {}}
+          "gratefulgraph"
+          {:graph (rexster/make-graph "localhost:8182" "gratefulgraph")
+           :vertices {}
+           :edges {}}}}))
 
 (defn get-current-graph-state [cursor]
   (let [current-graph (:current-graph cursor)
