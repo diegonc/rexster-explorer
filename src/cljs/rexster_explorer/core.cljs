@@ -8,7 +8,8 @@
             [rexster-explorer.http-rexster-graph :as rexster]
             [rexster-explorer.rexster-graph :as rg]
             [cljsjs.vis]
-            [cljsjs.react-burger-menu]))
+            [cljsjs.react-burger-menu]
+            [cljsjs.react-sanfona]))
 
 (enable-console-print!)
 
@@ -97,7 +98,20 @@
   (let [React (.-React js/window)]
     (.createElement React component
                     (clj->js props)
-                    children)))
+                    (to-array (flatten children)))))
+
+(defcomponent graph-menu-content [data owner]
+  (render
+   [_]
+   (let [Accordion (.-Accordion js/ReactSanfona)
+         AccordionItem (.-AccordionItem js/ReactSanfona)
+         available-graphs (map first (:available-graphs data))]
+     (react-build
+      Accordion {}
+      (map
+       #(react-build AccordionItem {:title %}
+                     (dom/div "Item body"))
+       available-graphs)))))
 
 (defcomponent graph-menu [data owner]
   (render
@@ -106,7 +120,6 @@
      (react-build
       menu
       {:id "graph-menu"
-       :className "the-class"
        :outerContainerId "outer-container"
        :pageWrapId "page-wrap"}
       (dom/div
@@ -114,7 +127,7 @@
        (dom/h2 "Graphs List")
        (dom/div
         {:class "menu-content"}
-        "Menu content"))))))
+        (om/build graph-menu-content data)))))))
 
 (defcomponent graph-information [data owner]
   (render [_]
