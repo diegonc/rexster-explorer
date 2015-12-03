@@ -165,6 +165,7 @@ html, body, .container, #app, #outer-container {
     text-align: right;
 }
 
+.new-graph button,
 .menu-item .actions button {
     margin-left: 5px;
     margin-bottom: 0;

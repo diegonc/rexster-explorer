@@ -78,15 +78,8 @@
            (clj->js (vis-make-edge e))))
 
 (defonce app-state
-  (atom {:current-graph "tinkergraph"
-         :available-graphs
-         {"tinkergraph" {:graph (rexster/make-graph "localhost:8182" "tinkergraph")
-                         :vertices {}
-                         :edges {}}
-          "gratefulgraph"
-          {:graph (rexster/make-graph "localhost:8182" "gratefulgraph")
-           :vertices {}
-           :edges {}}}}))
+  (atom {:current-graph :none
+         :available-graphs {}}))
 
 (defn get-current-graph-state [cursor]
   (let [current-graph (:current-graph cursor)
@@ -127,6 +120,107 @@
   (om/update! cursor :current-graph graph)
   (vis-reload-data @cursor))
 
+(defcomponent editable-setting
+  " An editable setting.
+
+    `data` must be a map with the following
+    fields:
+      - `:key`    the key to edit
+      - `:cursor` cursor pointing to the settings
+                  being edited
+
+    The `readonly?` option determines whether
+    this component is editable or not.
+    The `save-cb` option is a callback invoked
+    when the edited value is confirmed.
+  "
+  [data owner {:keys [readonly? save-cb]}]
+  (render
+   [_]
+   (let [edited-key (:key data)
+         cursor (:cursor data)]
+     (dom/div
+      {:class "row"}
+      (dom/div
+       {:class "four columns"
+        :style {:text-align "right"}}
+       (dom/label (str edited-key)))
+      (dom/div
+       {:class "eight columns"}
+       (dom/input
+        {:style {:padding-left "5px"
+                 :width "100%"
+                 :font-family "'Cutive Mono', monospace, sans"}
+         :read-only readonly?
+         :value (edited-key cursor)
+         :on-change #(om/transact! cursor []
+                      (fn [m] (assoc m edited-key
+                                     (.. % -target -value))))
+         :on-key-down #(when (= "Enter" (.-key %))
+                         (if (ifn? save-cb)
+                           (save-cb edited-key (edited-key cursor))))}))))))
+
+(defcomponent graph-settings-form
+  " Presents an editable view of the
+    settings of a give graph.
+
+    `data` must be a cursor to the graph's
+    settings.
+
+    The `new?` option, if present, indicates
+    whether the settings being edited comes
+    from a new graph; `:host-port` and `:name`
+    fields are editable only in that case.
+
+    `on-save` is a callback invoked when the
+    user request to save the changes. Each time
+    the user confirms the edition of a field the
+    callback is called with the modified `key` and
+    `new value` as arguments.
+  "
+  [data owner {:keys [new? on-save]}]
+  (render
+   [_]
+   (let [save-cb #(if (ifn? on-save)
+                    (on-save %1 %2))]
+     (dom/div
+      {:class "container with-no-padding"
+       :style {:padding "10px 10px"}}
+      (om/build editable-setting
+                {:key :host-port
+                 :cursor data}
+                {:opts {:readonly? (not new?)
+                        :save-cb save-cb}})
+      (om/build editable-setting
+                {:key :name
+                 :cursor data}
+                {:opts {:readonly? (not new?)
+                        :save-cb save-cb}})
+      (om/build editable-setting
+                {:key :vertex-id
+                 :cursor data}
+                {:opts {:save-cb save-cb}})
+      (om/build editable-setting
+                {:key :vertex-label
+                 :cursor data}
+                {:opts {:save-cb save-cb}})
+      (om/build editable-setting
+                {:key :edge-id
+                 :cursor data}
+                {:opts {:save-cb save-cb}})
+      (om/build editable-setting
+                {:key :edge-label
+                 :cursor data}
+                {:opts {:save-cb save-cb}})
+      (om/build editable-setting
+                {:key :edge-from
+                 :cursor data}
+                {:opts {:save-cb save-cb}})
+      (om/build editable-setting
+                {:key :edge-to
+                 :cursor data}
+                {:opts {:save-cb save-cb}})))))
+
 (defcomponent graph-menu-item [data owner]
   (render
    [_]
@@ -146,29 +240,80 @@
        :on-click #(activate-graph (:cursor data) (:item data))}
       "Activate")))))
 
+(defn default-graph-settings []
+  {:vertex-id    "_id"
+   :vertex-label "name"
+   :edge-id      "_id"
+   :edge-label   "_label"
+   :edge-from    "_outV"
+   :edge-to      "_inV"})
+
+(defn make-new-graph-state
+  [{:keys [host-port name
+           vertex-id vertex-label
+           edge-id edge-from edge-to edge-label]
+    :as settings}]
+  {:graph (rexster/make-graph host-port name)
+   :vertices {}
+   :edges {}
+   :settings
+   {:node-gen {:id    (keyword vertex-id)
+               :label (keyword vertex-label)}
+    :edge-gen {:id    (keyword edge-id)
+               :label (keyword edge-label)
+               :from  (keyword edge-from)
+               :to    (keyword edge-to)}}})
+
 (defcomponent graph-menu-content [data owner]
-  (render
-   [_]
+  (init-state [_] {:new-graph (atom (default-graph-settings))})
+  (render-state
+   [this {:keys [new-graph] :as state}]
    (let [Accordion (.-Accordion js/ReactSanfona)
          AccordionItem (.-AccordionItem js/ReactSanfona)
-         available-graphs (map first (:available-graphs data))]
+         available-graphs (map first (:available-graphs data))
+         new-graph-cursor (om/ref-cursor (om/root-cursor new-graph))]
      (dom/div
       (dom/div
        {:class "new-graph"}
        (react-build
         Accordion {:selectedIndex 1} ;; select none please
-        (react-build AccordionItem
-                     {:title "New Graph"}
-                     "TODO: New graph controls...")))
+        (react-build
+         AccordionItem
+         {:key 0 ;; silen React warning
+          :title "New Graph"}
+         (om/build graph-settings-form
+                   new-graph-cursor
+                   {:react-key 0 ;; silent React warning
+                    :opts {:new? true}})
+         (dom/div
+          {:key 1 ;; silent React warning
+           :style {:text-align "right"
+                   :padding-right "10px"}}
+          (dom/button
+           {:type "button"
+            :on-click #(when-not (contains?
+                                  (:available-graphs data)
+                                  (:name @new-graph))
+                         ;; TODO: validation...
+                         (let [name (:name @new-graph)
+                               state (make-new-graph-state @new-graph)]
+                           (om/transact! data :available-graphs
+                                         (fn [xs] (conj xs [name state])))
+                           (om/set-state! owner
+                                          (om/init-state this))
+                           ))}
+           "Create")))))
       (dom/div
        {:class "existing-graphs"}
        (react-build
         Accordion {}
         (map
-         #(react-build AccordionItem {:title %}
+         #(react-build AccordionItem {:key % ;; silent React warning
+                                      :title %}
                        (om/build graph-menu-item
                                  {:cursor data
-                                  :item %}))
+                                  :item %}
+                                 {:react-key 0}))
          available-graphs)))))))
 
 (defcomponent graph-menu [data owner]
@@ -182,7 +327,8 @@
        :pageWrapId "page-wrap"
        :initiallyOpened (not (has-current-graph? data))}
       (dom/div
-       {:class "menu-container"}
+       {:key 0 ;; silent React warning
+        :class "menu-container"}
        (dom/h2 "Graphs List")
        (dom/div
         {:class "menu-content"}
