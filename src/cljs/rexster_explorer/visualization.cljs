@@ -92,10 +92,10 @@
         edge-dataset (.-edges data)
         nodes (->> graph
                    gs/get-loaded-vertices
-                   (map make-node graph))
+                   (map #(make-node graph %)))
         edges (->> graph
                    gs/get-loaded-edges
-                   (map make-edge graph))]
+                   (map #(make-edge graph %)))]
     (.clear node-dataset)
     (.add node-dataset (clj->js nodes))
     (.clear edge-dataset)
