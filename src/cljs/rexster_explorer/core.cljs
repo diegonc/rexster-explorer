@@ -672,6 +672,10 @@
 ;; HACK Patch react-burger-menu
 (set! (.-slide js/BurgerMenu)
       (js/patch_initially_opened_prop (.-slide js/BurgerMenu)))
+;; HACK Patch sanfona accordion
+(set! (.-Accordion js/ReactSanfona)
+      (js/patch_enhance_sanfona_accordion
+       (.-Accordion js/ReactSanfona)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Attach root component

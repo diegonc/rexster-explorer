@@ -27,4 +27,38 @@
       return _class;
     })(menu);
   };
+
+  window.patch_enhance_sanfona_accordion = function (accordion) {
+    return (function (_accordion) {
+      _inherits(_class2, _accordion);
+
+      function _class2() {
+        _classCallCheck(this, _class2);
+
+        _get(Object.getPrototypeOf(_class2.prototype), "constructor", this).apply(this, arguments);
+      }
+
+      _createClass(_class2, [{
+        key: "componentWillReceiveProps",
+        value: function componentWillReceiveProps(nextProps) {
+          if (nextProps.resetSelected) {
+            var selectedIndex = nextProps.selectedIndex || 0;
+            var state = { selectedIndex: selectedIndex };
+            if (nextProps.allowMultiple) {
+              state.activeItems = [selectedIndex];
+            }
+            this.setState(state);
+          }
+        }
+      }, {
+        key: "handleClick",
+        value: function handleClick(index) {
+          _get(Object.getPrototypeOf(_class2.prototype), "handleClick", this).call(this, index);
+          if (this.props.onItemActivation) this.props.onItemActivation(index);
+        }
+      }]);
+
+      return _class2;
+    })(accordion);
+  };
 })();

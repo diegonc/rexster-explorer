@@ -1,0 +1,30 @@
+(function(){
+  window.patch_initially_opened_prop = function(menu) {
+    return class extends menu {
+      getInitialState() {
+        return { isOpen: this.props.initiallyOpened === true }
+      }
+    }
+  };
+  
+  window.patch_enhance_sanfona_accordion = function(accordion) {
+    return class extends accordion {
+      componentWillReceiveProps(nextProps) {
+        if (nextProps.resetSelected) {
+          let selectedIndex = nextProps.selectedIndex || 0;
+          let state = { selectedIndex: selectedIndex};
+          if (nextProps.allowMultiple) {
+            state.activeItems = [selectedIndex];
+          }
+          this.setState(state);
+        }
+      }
+      
+      handleClick(index) {
+        super.handleClick(index);
+        if (this.props.onItemActivation)
+          this.props.onItemActivation(index);
+      }
+    }
+  };
+})()
