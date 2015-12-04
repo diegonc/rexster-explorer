@@ -52,16 +52,18 @@
     (load-introductory-graph nodes edges)))
 
 (defn- make-node [graph vertex]
-  ;; TODO: use the graph settings
-  {:id    (:_id  vertex)
-   :label (:name vertex)})
+  (let [{:keys [id label]}
+        (gs/get-settings-node-map graph)]
+    {:id    (vertex id)
+     :label (vertex label)}))
 
 (defn- make-edge [graph edge]
-  ;; TODO: use graph settings
-  {:id    (:_id    edge)
-   :from  (:_outV  edge)
-   :to    (:_inV   edge)
-   :label (:_label edge)})
+  (let [{:keys [id label from to]}
+        (gs/get-settings-edge-map graph)]
+    {:id    (edge id)
+     :from  (edge from)
+     :to    (edge to)
+     :label (edge label)}))
 
 (defn add-vertex
   "Adds to the visualization `vis` the vertex

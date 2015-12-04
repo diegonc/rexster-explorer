@@ -154,3 +154,13 @@
   [id e gs]
   (update gs :edges
           #(assoc %1 id e)))
+
+(defn get-settings-node-map
+  "Returns vertices' visualization map."
+  [gs]
+  (-> gs :settings :vis-map :nodes))
+
+(defn get-settings-edge-map
+  "Returns edges' visualization map."
+  [gs]
+  (-> gs :settings :vis-map :edges))
