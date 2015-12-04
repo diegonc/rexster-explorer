@@ -39,6 +39,12 @@
   (om/transact! cursor []
                 #(as/activate-graph graph %)))
 
+(defn delete-graph [cursor graph]
+  (when (as/is-current-graph? graph cursor)
+    (activate-graph cursor :none))
+  (om/transact! cursor []
+                #(as/delete-graph graph %)))
+
 (defcomponent editable-setting
   " An editable setting.
 
@@ -171,7 +177,8 @@
      {:class "actions"}
      (dom/button
       {:type "button"
-       :class "delete"}
+       :class "delete"
+       :on-click #(delete-graph (:cursor data) (:item data))}
       "Delete")
      (dom/button
       {:type "button"
@@ -206,7 +213,7 @@
                                        false)}
         (react-build
          AccordionItem
-         {:key 0 ;; silen React warning
+         {:key 0 ;; silent React warning
           :title "New Graph"}
          (om/build graph-settings-form
                    new-graph-cursor

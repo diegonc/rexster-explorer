@@ -86,7 +86,8 @@
    Returns a new app state with the changes
    above."
   [graph-id app]
-  (assert (contains-graph? graph-id app))
+  (assert (or (= :none graph-id)
+              (contains-graph? graph-id app)))
   (let [new-app (assoc app :current-graph graph-id)]
     (refresh-visualization new-app)
     new-app))
@@ -122,8 +123,23 @@
   (update app :available-graphs
           #(conj %1 [id graph])))
 
+(defn delete-graph
+  "Deletes the graph with the identifier
+   given in the `graph-id` argument from
+   the app state `app`."
+  [graph-id app]
+  (assert (contains-graph? graph-id app))
+  (update app :available-graphs
+          #(dissoc %1 graph-id)))
+
 (defn get-visualization
   "Gets the visualization of the given `app` state."
   [app]
   (:visualization app))
+
+(defn is-current-graph?
+  "Determines whether `graph-id` is the currently
+   selected graph in `app`."
+  [graph-id app]
+  (= (:current-graph app) graph-id))
 
