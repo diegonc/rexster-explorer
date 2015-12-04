@@ -7,6 +7,9 @@
             [cljs.core.async :refer [<! >! chan close!]]
             [rexster-explorer.http-rexster-graph :as rexster]
             [rexster-explorer.rexster-graph :as rg]
+            [rexster-explorer.app-state :as as]
+            [rexster-explorer.graph-state :as gs]
+            [rexster-explorer.visualization :as vis]
             [cljsjs.vis]
             [cljsjs.react-burger-menu]
             [cljsjs.react-sanfona]))
@@ -16,79 +19,15 @@
 (defn- log [x & tag]
   (.log js/console (apply str tag) x) x)
 
-(defonce vis-options (clj->js
-                      {:layout {:randomSeed 994841}
-                       :nodes {:shadow true
-                               :shape :dot}
-                       :edges {:arrows {:to {:enabled true
-                                             :scaleFactor 0.745}}}}))
+(defonce vis-options
+  (clj->js
+   {:layout {:randomSeed 994841}
+    :nodes {:shadow true
+            :shape :dot}
+    :edges {:arrows {:to {:enabled true
+                          :scaleFactor 0.745}}}}))
 
-;; Build introductory graph
-(defn build-introductory-graph [nodes edges]
-    (.clear nodes)
-    (.add nodes #js [#js {"id" 1 "label" "A"}
-                     #js {"id" 2 "label" "B"}])
-    (.clear edges)
-    (.add edges #js {"id" "e1"
-                     "from" 1
-                     "to" 2
-                     "label" "Search and add vertices or edges"}))
-
-(defn vis-make-introductory-graph []
-  (let [nodes (js/vis.DataSet.)
-        edges (js/vis.DataSet.)]
-    (build-introductory-graph nodes edges)
-    #js {"nodes" nodes
-         "edges" edges}))
-
-(defn vis-make-node [rexster-vertex]
-  ;; TODO: make this process a graph setting
-  {:id (:_id rexster-vertex)
-   :label (:name rexster-vertex)})
-
-(defn vis-make-edge [rexster-edge]
-  ;; TODO: make this process a graph setting
-  {:id (:_id rexster-edge)
-   :from (:_outV rexster-edge)
-   :to (:_inV rexster-edge)
-   :label (:_label rexster-edge)})
-
-(defn vis-build-current-graph [graph vis-data]
-  (let [node-dataset (.-nodes vis-data)
-        edge-dataset (.-edges vis-data)
-        nodes (->> graph
-                   :vertices
-                   (map second)
-                   (map vis-make-node))
-        edges (->> graph
-                   :edges
-                   (map second)
-                   (map vis-make-edge))]
-    (.clear node-dataset)
-    (.add node-dataset (clj->js nodes))
-    (.clear edge-dataset)
-    (.add edge-dataset (clj->js edges))))
-
-(defn vis-add-vertex [vis-data v]
-  (.update (.-nodes vis-data)
-           (clj->js (vis-make-node v))))
-
-(defn vis-add-edge [vis-data e]
-  (.update (.-edges vis-data)
-           (clj->js (vis-make-edge e))))
-
-(defonce app-state
-  (atom {:current-graph :none
-         :available-graphs {}}))
-
-(defn get-current-graph-state [cursor]
-  (let [current-graph (:current-graph cursor)
-        available-graphs (:available-graphs cursor)]
-    (available-graphs current-graph)))
-
-(defn has-current-graph? [cursor]
-  (let [current (get-current-graph-state cursor)]
-    (not (nil? current))))
+(defonce app-state (atom (as/make-new-state)))
 
 (defn react-build [component props & children]
   (let [React (.-React js/window)]
@@ -96,36 +35,22 @@
                     (clj->js props)
                     (to-array (flatten children)))))
 
-(defn vis-reload-data [app-state]
-  (let [vis-data (-> app-state :visualization :data)
-        graph (or (get-current-graph-state app-state) {})
-        edges (:edges graph)
-        nodes (:vertices graph)]
-    (if (or (seq edges) (seq nodes))
-      (vis-build-current-graph graph vis-data)
-      (build-introductory-graph (.-nodes vis-data)
-                                (.-edges vis-data)))))
-
-(defn vis-setup-visualization [node app-state]
-  (let [vis-data (vis-make-introductory-graph)
-        vis-network (js/vis.Network.
-                     node
-                     vis-data
-                     vis-options)]
-    (om/update! app-state :visualization
-                {:data    vis-data
-                 :network vis-network})))
-
 (defn activate-graph [cursor graph]
-  (om/update! cursor :current-graph graph)
-  (vis-reload-data @cursor))
+  (om/transact! cursor []
+                #(as/activate-graph graph %)))
 
 (defcomponent editable-setting
   " An editable setting.
 
     `data` must be a map with the following
     fields:
-      - `:key`    the key to edit
+      - `:key-desc` description of the key to edit
+                    that must be a map with the
+                    following fields:
+                    - `:key`   key of the cursor
+                               edit
+                    - `:label` label to display
+                               [optional]
       - `:cursor` cursor pointing to the settings
                   being edited
 
@@ -137,14 +62,15 @@
   [data owner {:keys [readonly? save-cb]}]
   (render
    [_]
-   (let [edited-key (:key data)
+   (let [edited-key (-> data :key-desc :key)
+         label (-> data :key-desc :label)
          cursor (:cursor data)]
      (dom/div
       {:class "row"}
       (dom/div
        {:class "four columns"
         :style {:text-align "right"}}
-       (dom/label (str edited-key)))
+       (dom/label (or label (str edited-key))))
       (dom/div
        {:class "eight columns"}
        (dom/input
@@ -153,19 +79,20 @@
                  :font-family "'Cutive Mono', monospace, sans"}
          :read-only readonly?
          :value (edited-key cursor)
-         :on-change #(om/transact! cursor []
-                      (fn [m] (assoc m edited-key
-                                     (.. % -target -value))))
+         :on-change #(om/transact!
+                      cursor edited-key
+                      (fn [_] (.. % -target -value)))
          :on-key-down #(when (= "Enter" (.-key %))
                          (if (ifn? save-cb)
                            (save-cb edited-key (edited-key cursor))))}))))))
 
 (defcomponent graph-settings-form
   " Presents an editable view of the
-    settings of a give graph.
+    settings of a given graph.
 
     `data` must be a cursor to the graph's
-    settings.
+    settings, structured as described in
+    `rexster-explorer.graph-state` namespace.
 
     The `new?` option, if present, indicates
     whether the settings being edited comes
@@ -187,38 +114,50 @@
       {:class "container with-no-padding"
        :style {:padding "10px 10px"}}
       (om/build editable-setting
-                {:key :host-port
+                {:key-desc {:key :host-port}
                  :cursor data}
                 {:opts {:readonly? (not new?)
                         :save-cb save-cb}})
       (om/build editable-setting
-                {:key :name
+                {:key-desc {:key :name}
                  :cursor data}
                 {:opts {:readonly? (not new?)
                         :save-cb save-cb}})
       (om/build editable-setting
-                {:key :vertex-id
-                 :cursor data}
+                {:key-desc {:key :id
+                            :label ":vertex-id"}
+                 ;; TODO add function to graph-state?
+                 :cursor (-> data :vis-map :nodes)}
                 {:opts {:save-cb save-cb}})
       (om/build editable-setting
-                {:key :vertex-label
-                 :cursor data}
+                {:key-desc {:key :label
+                            :label ":vertex-label"}
+                 ;; TODO add function to graph-state?
+                 :cursor (-> data :vis-map :nodes)}
                 {:opts {:save-cb save-cb}})
       (om/build editable-setting
-                {:key :edge-id
-                 :cursor data}
+                {:key-desc {:key :id
+                            :label ":edge-id"}
+                 ;; TODO add function to graph-state?
+                 :cursor (-> data :vis-map :edges)}
                 {:opts {:save-cb save-cb}})
       (om/build editable-setting
-                {:key :edge-label
-                 :cursor data}
+                {:key-desc {:key :label
+                            :label ":edge-label"}
+                 ;; TODO add function to graph-state?
+                 :cursor (-> data :vis-map :edges)}
                 {:opts {:save-cb save-cb}})
       (om/build editable-setting
-                {:key :edge-from
-                 :cursor data}
+                {:key-desc {:key :from
+                            :label ":edge-from"}
+                 ;; TODO add function to graph-state?
+                 :cursor (-> data :vis-map :edges)}
                 {:opts {:save-cb save-cb}})
       (om/build editable-setting
-                {:key :edge-to
-                 :cursor data}
+                {:key-desc {:key :to
+                            :label ":edge-to"}
+                 ;; TODO add function to graph-state?
+                 :cursor (-> data :vis-map :edges)}
                 {:opts {:save-cb save-cb}})))))
 
 (defcomponent graph-menu-item [data owner]
@@ -240,43 +179,31 @@
        :on-click #(activate-graph (:cursor data) (:item data))}
       "Activate")))))
 
-(defn default-graph-settings []
-  {:vertex-id    "_id"
-   :vertex-label "name"
-   :edge-id      "_id"
-   :edge-label   "_label"
-   :edge-from    "_outV"
-   :edge-to      "_inV"})
-
 (defn make-new-graph-state
-  [{:keys [host-port name
-           vertex-id vertex-label
-           edge-id edge-from edge-to edge-label]
-    :as settings}]
-  {:graph (rexster/make-graph host-port name)
-   :vertices {}
-   :edges {}
-   :settings
-   {:node-gen {:id    (keyword vertex-id)
-               :label (keyword vertex-label)}
-    :edge-gen {:id    (keyword edge-id)
-               :label (keyword edge-label)
-               :from  (keyword edge-from)
-               :to    (keyword edge-to)}}})
+  [{:keys [host-port name] :as settings}]
+  (let [settings (gs/keywordize-settings settings)]
+    (->> (gs/make-new-state)
+         (gs/set-graph (rexster/make-graph host-port name))
+         (gs/set-settings settings))))
 
 (defcomponent graph-menu-content [data owner]
-  (init-state [_] {:new-graph (atom (default-graph-settings))})
+  (init-state [_] {:reset-selected true})
   (render-state
-   [this {:keys [new-graph] :as state}]
+   [_ {:keys [reset-selected] :as state}]
    (let [Accordion (.-Accordion js/ReactSanfona)
          AccordionItem (.-AccordionItem js/ReactSanfona)
-         available-graphs (map first (:available-graphs data))
-         new-graph-cursor (om/ref-cursor (om/root-cursor new-graph))]
+         available-graphs (as/get-available-graphs-keys data)
+         new-graph-cursor (as/get-new-graph-settings data)]
      (dom/div
       (dom/div
        {:class "new-graph"}
        (react-build
-        Accordion {:selectedIndex 1} ;; select none please
+        Accordion {:selectedIndex -1 ;; select none please
+                   :resetSelected reset-selected
+                   :onItemActivation #(om/set-state!
+                                       owner
+                                       :reset-selected
+                                       false)}
         (react-build
          AccordionItem
          {:key 0 ;; silen React warning
@@ -291,17 +218,20 @@
                    :padding-right "10px"}}
           (dom/button
            {:type "button"
-            :on-click #(when-not (contains?
-                                  (:available-graphs data)
-                                  (:name @new-graph))
+            :on-click #(when-not (as/contains-graph?
+                                  (:name new-graph-cursor) data)
                          ;; TODO: validation...
-                         (let [name (:name @new-graph)
-                               state (make-new-graph-state @new-graph)]
-                           (om/transact! data :available-graphs
-                                         (fn [xs] (conj xs [name state])))
-                           (om/set-state! owner
-                                          (om/init-state this))
-                           ))}
+                         (let [name (:name new-graph-cursor)
+                               state (make-new-graph-state
+                                      (om/value new-graph-cursor))]
+                           (om/transact!
+                            data []
+                            (fn [app]
+                              (->> app
+                                   (as/add-graph name state)
+                                   as/clear-new-graph-settings)))
+                           (om/set-state!
+                            owner :reset-selected true)))}
            "Create")))))
       (dom/div
        {:class "existing-graphs"}
@@ -325,7 +255,7 @@
       {:id "graph-menu"
        :outerContainerId "outer-container"
        :pageWrapId "page-wrap"
-       :initiallyOpened (not (has-current-graph? data))}
+       :initiallyOpened (not (as/has-current-graph? data))}
       (dom/div
        {:key 0 ;; silent React warning
         :class "menu-container"}
@@ -337,7 +267,7 @@
 (defcomponent graph-information [data owner]
   (render
    [_]
-   (let [graph (:graph (get-current-graph-state data))
+   (let [graph (:graph data) ;; TODO gs/*
          graph-name (rexster/get-graph-name graph)
          graph-uri (rexster/get-graph-uri graph)]
       (dom/div
@@ -431,6 +361,7 @@
        (some #{"vertex" "edge"} [(:_type item)])))
 
 (defn search-result-present? [graph item]
+  ;; TODO: make it use the modules...
   (let [{:keys [edges vertices]} (om/value graph)]
     (condp = (:_type item)
           "vertex" (vertices (:_id item))
@@ -558,40 +489,39 @@
                       :error (:error results))
                (dissoc xn :message :error)))))))))
 
-(defn graph-state-has-elements? [graph-state]
-  (or (seq (:vertices graph-state))
-      (seq (:edges graph-state))))
-
 ;;    Adds a graph element to the appropiate visualization's
 ;;    dataset.
 ;;
-;;      op is { :op-type      :add-graph-element
-;;              :element-type Type of the element to add
-;;              :element-id   Id of the element to add
-;;              :graph-state  Cursor to the currently selected
-;;                            graph's state. The element to add
-;;                            is looked up in the graph it
-;;                            represents.
-;;              :vis-dataset  The visualization's dataset where
-;;                            a representation of the element
-;;                            is added.
+;;      op is { :op-type       :add-graph-element
+;;              :element-type  Type of the element to add
+;;              :element-id    Id of the element to add
+;;              :graph-state   Cursor to the currently selected
+;;                             graph's state. The element to add
+;;                             is looked up in the graph it
+;;                             represents.
+;;              :visualization The visualization where a
+;;                             representation of the element
+;;                             is added.
 ;;            }
 (defmethod graph-query-op-dispatch :add-graph-element
   [op owner]
   (let [_type (:element-type op)
         _id (:element-id op)
         graph-state (:graph-state op)
-        graph (:graph graph-state)
-        vis-data (:vis-dataset op)]
+        graph (:graph graph-state) ;; TODO: use module?
+        visualization (:visualization op)]
     (condp = _type
       "vertex"
       (go (let [{v? :success v :results} (<! (rg/get-vertex graph _id))]
             (if v?
-              (let [rebuild? (not (graph-state-has-elements? graph-state))]
-                (om/transact! graph-state :vertices #(assoc % _id v))
+              (let [rebuild? (not (gs/has-elements? graph-state))]
+                (om/transact! graph-state []
+                              #(gs/add-vertex _id v %1))
+                ;; TODO: use invisible component to
+                ;; rebuild/update visualization?
                 (if rebuild?
-                  (vis-build-current-graph @graph-state vis-data)
-                  (vis-add-vertex vis-data v)))
+                  (vis/visualize-graph visualization @graph-state)
+                  (vis/add-vertex visualization @graph-state v)))
               ;; TODO: handle errors
               (:message v))))
       "edge"
@@ -599,16 +529,19 @@
                 {o? :success o :results} (<! (rg/get-vertex graph (:_outV e)))
                 {i? :success i :results} (<! (rg/get-vertex graph (:_inV e)))]
             (if (and e? o? i?)
-              (let [rebuild? (not (graph-state-has-elements? graph-state))]
-                (om/transact! graph-state :vertices
-                              #(assoc % (:_id o) o (:_id i) i))
-                (om/transact! graph-state :edges #(assoc % _id e))
+              (let [rebuild? (not (gs/has-elements? graph-state))]
+                (om/transact! graph-state []
+                              #(gs/add-vertices %1
+                                                (:_id o) o
+                                                (:_id i) i))
+                (om/transact! graph-state []
+                              #(gs/add-edge _id e %1))
                 (if rebuild?
-                  (vis-build-current-graph @graph-state vis-data)
+                  (vis/visualize-graph visualization @graph-state)
                   (do
-                    (vis-add-vertex vis-data o)
-                    (vis-add-vertex vis-data i)
-                    (vis-add-edge vis-data e))))
+                    (vis/add-vertex visualization @graph-state o)
+                    (vis/add-vertex visualization @graph-state i)
+                    (vis/add-edge visualization @graph-state e))))
               ;; TODO: handle errors
               (map :message [e o i])))))))
 
@@ -625,7 +558,7 @@
   [op owner app-state]
   {:op-type :exec-graph-query
    :query (str "g." (:data op))
-   :graph (:graph (get-current-graph-state app-state))})
+   :graph (:graph (as/get-current-graph-state app-state))})
 
 ;; Process a :search-result-add-element event by
 ;; building an :add-graph-element op which will
@@ -635,8 +568,8 @@
   {:op-type      :add-graph-element
    :element-type (:element-type op)
    :element-id   (:element-id op)
-   :graph-state  (get-current-graph-state app-state)
-   :vis-dataset  (-> app-state :visualization :data)})
+   :graph-state  (as/get-current-graph-state app-state)
+   :visualization (om/value (as/get-visualization app-state))})
 
 (defcomponent graph-query [data owner]
   (init-state [_] {:events-chan (chan)
@@ -663,13 +596,14 @@
   (will-receive-props
    [_ next-props]
    (let [previous-props (om/get-props owner)
+         ;; TODO: use modules to acces data...
          previous-graph (:current-graph previous-props)
          next-graph (:current-graph next-props)]
      (when-not (= previous-graph next-graph)
        (om/set-state! owner :query-state {:success :empty}))))
   (render-state
    [_ state]
-   (let [current-graph (get-current-graph-state data)
+   (let [current-graph (as/get-current-graph-state data)
          results-class (str "search-results"
                             (if (:with-button state)
                               " with-button"))]
@@ -699,7 +633,9 @@
   (did-mount
    [_]
    (let [node (om/get-node owner)]
-     (vis-setup-visualization node root-cursor)))
+     (om/transact! root-cursor []
+                   #(as/setup-visualization
+                     node vis-options %1))))
   (render-state
    [_ state]
    (dom/div {:id (:id state)
@@ -719,14 +655,14 @@
       {:class "row header"}
       (dom/div {:id "graph-info"
                 :class "twelve columns"}
-               (if (has-current-graph? root-cursor)
+               (if (as/has-current-graph? root-cursor)
                  (om/build graph-information
-                           root-cursor))))
+                           (as/get-current-graph-state root-cursor)))))
      (dom/div
       {:class "row content"}
       (dom/div {:id "graph-search"
                 :class "three columns search"}
-               (if (has-current-graph? root-cursor)
+               (if (as/has-current-graph? root-cursor)
                  (om/build graph-query root-cursor)))
       (om/build graph-visualization root-cursor
                 {:init-state
@@ -746,4 +682,4 @@
 
 (defn on-jsload [& args]
   (let [state @app-state]
-    (vis-reload-data state)))
+    (as/refresh-visualization state)))
